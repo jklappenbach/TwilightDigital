@@ -1,0 +1,240 @@
+@media (max-width: 620px) {
+    .brand { font-size: 28px; }
+    .search { display: none; }
+}
+
+:root {
+    /* Sidebar width moved from inline; increased by 10% */
+    --sidebar-w: min(16.5vw, 220px);
+}
+
+/* Left sidebar */
+.sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: var(--sidebar-w);
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+    border-right: 1px solid var(--frost-border);
+    z-index: 30;
+    height: 100vh; /* Fill viewport to allow flex to place bottom at the end */
+}
+
+.sidebar-scroll {
+    flex: 1 1 auto;
+    /* Avoid horizontal scroll while still allowing vertical scrolling for long lists */
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Remove container padding to prevent full-bleed header from forcing horizontal scroll */
+    padding: 0;
+    display: grid;
+    gap: 0;
+}
+
+/* Ensure the tablist only takes the space of its tabs (no extra growth/scroll) */
+#sidebarTabs {
+    flex: 0 0 auto;
+    overflow: visible;
+    /* Let it size to its content to avoid unnecessary scroll */
+    height: auto;
+    /* Add local padding since container padding was removed */
+    padding: 10px 10px 0;
+}
+
+#sidebarChannels {
+    /* Reduced offset so tablist sizing doesn't force scroll */
+    margin-top: 10px;
+    padding: 0;
+}
+
+.channels-bar {
+    display: block;
+    /* Full-bleed without negative margins now that container padding is 0 */
+    margin: 0;
+    padding: 10px 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    border-radius: 0;
+    border: none;
+    background: var(--btn-bg);
+    color: var(--fg);
+    user-select: none;
+}
+
+.channels-list {
+    margin: 10px 0 0;
+    /* Restore comfortable left/right breathing room for items */
+    padding: 0 10px;
+    list-style: none;
+    display: grid;
+    gap: 8px;
+}
+
+.creator-item {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--frost-border);
+    background: var(--card-bg);
+}
+
+.creator-thumb {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 1px solid var(--frost-border);
+    background: var(--frost);
+}
+
+.creator-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 600;
+}
+
+.side-item {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-columns: 28px 1fr;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    /* Uniform width for all tab items (~90% of sidebar), centered */
+    width: 90%;
+    margin: 8px auto;
+    box-sizing: border-box;
+    border-radius: 12px;
+    color: var(--fg);
+    text-decoration: none;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease;
+}
+
+.side-item:hover {
+    background: var(--btn-bg-hover);
+    border-color: var(--frost-border);
+}
+
+.side-item[aria-selected="true"] {
+    background: linear-gradient(135deg, rgba(92, 200, 255, 0.2), rgba(255, 255, 255, 0.06));
+    border-color: rgba(92, 200, 255, 0.5);
+    box-shadow: 0 0 0 1px rgba(92, 200, 255, 0.2) inset;
+}
+
+.side-item .icon {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: .9;
+}
+
+.side-item .label {
+    font-weight: 600;
+    letter-spacing: .02em;
+}
+
+/* Bottom, non-scrollable section */
+.sidebar-bottom {
+    flex: 0 0 auto;
+    border-top: 1px solid var(--frost-border);
+    padding: 12px;
+    display: grid;
+    gap: 10px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+    margin-top: auto; /* Anchor to the bottom of the sidebar */
+}
+
+.create-creator {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-columns: 28px 1fr;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px dashed var(--frost-border);
+    background: var(--btn-bg);
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease;
+}
+
+.create-creator:hover {
+    background: var(--btn-bg-hover);
+    border-color: rgba(92, 200, 255, 0.6);
+}
+
+.user-row {
+    display: grid;
+    grid-template-columns: 32px 1fr 24px;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 4px 2px;
+}
+
+.user-thumb {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--frost);
+    border: 1px solid var(--frost-border);
+}
+
+.user-name {
+    display: block;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+    border: 1px solid var(--frost-border);
+    background: var(--btn-bg);
+    cursor: pointer;
+}
+
+.user-menu-btn:hover {
+    background: var(--btn-bg-hover);
+}
+
+/* Main content area shifted by sidebar */
+.user-main {
+    margin-left: var(--sidebar-w);
+    padding: 18px 16px 0;
+}
+
+.user-main-inner {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 10px 0 24px;
+}
+
+/* Right-side tab panels controlled by left sidebar */
+.tab-panel {
+    display: none;
+}
+
+.tab-panel[aria-hidden="false"] {
+    display: block;
+}
+
+/* Utility */
+.hidden {
+    display: none !important;
+}

@@ -1,0 +1,362 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: TwilightDigital\n"
+"Language: ja\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Twilight Digital"
+msgstr "Twilight Digital"
+
+msgid "Menu"
+msgstr "メニュー"
+
+msgid "search for creators"
+msgstr "クリエイターを検索"
+
+msgid "Search creators"
+msgstr "クリエイターを検索"
+
+msgid "Search"
+msgstr "検索"
+
+msgid "Login"
+msgstr "ログイン"
+
+msgid "Create Account"
+msgstr "アカウント作成"
+
+msgid "Popular Creators"
+msgstr "人気のクリエイター"
+
+msgid "Discover trending voices shaping the future."
+msgstr "未来を形作るトレンドの声を見つけよう。"
+
+msgid "Follow"
+msgstr "フォロー"
+
+msgid "Take Command of Your Destiny"
+msgstr "自分の運命を切り開こう"
+
+msgid "With Twilight Digital, creators own their audience, data, and revenue streams. Launch premium feeds, engage superfans, and turn momentum into meaningful growth."
+msgstr "Twilight Digital では、クリエイターがオーディエンス、データ、収益を所有します。プレミアム配信を開始し、熱心なファンとつながり、勢いを成長へとつなげましょう。"
+
+msgid "Publish once, reach everywhere"
+msgstr "一度の公開で、あらゆる場所に届く"
+
+msgid "Direct fan relationships and memberships"
+msgstr "ファンとの直接的な関係とメンバーシップ"
+
+msgid "Actionable analytics and seamless payouts"
+msgstr "実用的な分析とシームレスな支払い"
+
+msgid "Start Creating"
+msgstr "作成を始める"
+
+msgid "Learn More"
+msgstr "詳しく見る"
+
+msgid "Empowering creators to build, grow, and thrive."
+msgstr "クリエイターが築き、成長し、活躍できるよう支援します。"
+
+msgid "All rights reserved."
+msgstr "無断複写・転載を禁じます。"
+
+msgid "Site Map"
+msgstr "サイトマップ"
+
+msgid "Home"
+msgstr "ホーム"
+
+msgid "Creators"
+msgstr "クリエイター"
+
+msgid "Pricing"
+msgstr "料金"
+
+msgid "Blog"
+msgstr "ブログ"
+
+msgid "Company"
+msgstr "会社情報"
+
+msgid "About"
+msgstr "概要"
+
+msgid "Careers"
+msgstr "採用情報"
+
+msgid "Press"
+msgstr "プレス"
+
+msgid "Contact"
+msgstr "お問い合わせ"
+
+msgid "Legal"
+msgstr "法務"
+
+msgid "Privacy"
+msgstr "プライバシー"
+
+msgid "Terms"
+msgstr "利用規約"
+
+msgid "Cookies"
+msgstr "クッキー"
+
+msgid "Accessibility"
+msgstr "アクセシビリティ"
+
+msgid "Please enter a valid email address."
+msgstr "有効なメールアドレスを入力してください。"
+
+msgid "Your %(app_name)s verification code"
+msgstr "%(app_name)s の確認コード"
+
+msgid "Failed to send verification email: %(error)s"
+msgstr "確認メールの送信に失敗しました: %(error)s"
+
+msgid "Your session has become corrupt.  Please try again later."
+msgstr "セッションが破損しました。後でもう一度お試しください。"
+
+msgid "Please enter the 6-digit verification code."
+msgstr "6桁の確認コードを入力してください。"
+
+msgid "This email does not match the address that requested a code."
+msgstr "このメールアドレスはコードを要求したアドレスと一致しません。"
+
+msgid "Stored code is invalid. Please request a new code."
+msgstr "保存されたコードは無効です。新しいコードをリクエストしてください。"
+
+msgid "The verification code has expired. Please request a new code."
+msgstr "確認コードの有効期限が切れました。新しいコードをリクエストしてください。"
+
+msgid "The verification code is incorrect."
+msgstr "確認コードが正しくありません。"
+
+msgid "Email is required"
+msgstr "メールアドレスは必須です"
+
+msgid "Invalid email format"
+msgstr "メール形式が無効です"
+
+msgid "Failed to generate QR code"
+msgstr "QRコードの生成に失敗しました"
+
+msgid "Internal server error"
+msgstr "サーバー内部エラー"
+
+msgid "Cancel"
+msgstr "キャンセル"
+
+msgid "Create your account"
+msgstr "アカウントを作成"
+
+msgid "Join Twilight Digital to build, grow, and thrive."
+msgstr "Twilight Digital に参加して、構築し、成長し、活躍しましょう。"
+
+msgid "Email"
+msgstr "メール"
+
+msgid "you@example.com"
+msgstr "you@example.com"
+
+msgid "Verification code"
+msgstr "確認コード"
+
+msgid "123 456"
+msgstr "123 456"
+
+msgid "Email Verification code"
+msgstr "メール確認コード"
+
+msgid "Set up 2FA"
+msgstr "2要素認証を設定"
+
+msgid "2FA methods"
+msgstr "2要素認証の方法"
+
+msgid "Authenticator"
+msgstr "認証アプリ"
+
+msgid "SMS"
+msgstr "SMS"
+
+msgid "Verify actions via codes sent to your configured email."
+msgstr "設定したメールに送信されるコードで操作を確認します。"
+
+msgid "Select"
+msgstr "選択"
+
+msgid "Use a TOTP authenticator app to generate one-time codes."
+msgstr "TOTP 認証アプリでワンタイムコードを生成します。"
+
+msgid "Authenticator QR Code"
+msgstr "認証アプリ用QRコード"
+
+msgid "Preparing QR code…"
+msgstr "QRコードを準備中…"
+
+msgid "1) Scan this QR in your authenticator app"
+msgstr "1) 認証アプリでこのQRをスキャン"
+
+msgid "2) Then enter the 6-digit code below"
+msgstr "2) 次に、下の6桁コードを入力"
+
+msgid "Enter Code"
+msgstr "コードを入力"
+
+msgid "Authenticator code"
+msgstr "認証コード"
+
+msgid "Verify"
+msgstr "確認"
+
+msgid "Receive codes via text message."
+msgstr "SMSでコードを受け取る。"
+
+msgid "+1 555 123 4567"
+msgstr "+81 90 1234 5678"
+
+msgid "Phone number"
+msgstr "電話番号"
+
+msgid "Link Phone"
+msgstr "電話を連携"
+
+msgid "Support"
+msgstr "サポート"
+
+msgid "Help Center"
+msgstr "ヘルプセンター"
+
+msgid "Sending..."
+msgstr "送信中..."
+
+msgid "Submit Code"
+msgstr "コードを送信"
+
+msgid "Failed to load QR code."
+msgstr "QRコードの読み込みに失敗しました。"
+
+msgid "Failed to send code"
+msgstr "コードの送信に失敗しました"
+
+msgid "Could not send code due to an internal error. Please try again later."
+msgstr "内部エラーのためコードを送信できませんでした。後でもう一度お試しください。"
+
+msgid "Submit"
+msgstr "送信"
+
+msgid "Verification failed."
+msgstr "確認に失敗しました。"
+
+msgid "Network error verifying code. Please try again."
+msgstr "コード確認中にネットワークエラーが発生しました。もう一度お試しください。"
+
+msgid "Invalid OTP Code.  Please try again."
+msgstr "無効なOTPコードです。もう一度お試しください。"
+
+msgid "Failed to send code:"
+msgstr "コードの送信に失敗："
+
+msgid "Sign In"
+msgstr "ログイン"
+
+msgid "Sign In • Twilight Digital"
+msgstr "ログイン • Twilight Digital"
+
+msgid "Sign in to your account"
+msgstr "アカウントにサインイン"
+
+msgid "Welcome back to Twilight Digital."
+msgstr "Twilight Digital へお帰りなさい。"
+
+msgid "Email Address"
+msgstr "メールアドレス"
+
+msgid "Choose authentication method"
+msgstr "認証方法を選択"
+
+msgid "Authentication methods"
+msgstr "認証方法"
+
+msgid "OTP"
+msgstr "OTP"
+
+msgid "We'll send a verification code to your email address."
+msgstr "メールアドレス宛に確認コードを送信します。"
+
+msgid "Enter Verification Code"
+msgstr "確認コードを入力"
+
+msgid "123456"
+msgstr "123456"
+
+msgid "Resend Code"
+msgstr "コードを再送信"
+
+msgid "Enter the code from your authenticator app."
+msgstr "認証アプリに表示されるコードを入力してください。"
+
+msgid "Authenticator Code"
+msgstr "認証コード"
+
+msgid "Failed to send verification code:"
+msgstr "確認コードの送信に失敗："
+
+msgid "Verifying..."
+msgstr "確認中..."
+
+msgid "An error occurred. Please try again."
+msgstr "エラーが発生しました。もう一度お試しください。"
+
+msgid "Invalid authenticator code"
+msgstr "認証コードが無効です"
+
+msgid "Primary"
+msgstr "メイン"
+
+msgid "Feed"
+msgstr "フィード"
+
+msgid "Explore"
+msgstr "探索"
+
+msgid "Store"
+msgstr "ストア"
+
+msgid "thumbnail"
+msgstr "サムネイル"
+
+msgid "Default channel thumbnail"
+msgstr "デフォルトのチャンネルサムネイル"
+
+msgid "No creators yet"
+msgstr "クリエイターはまだいません"
+
+msgid "Become a creator"
+msgstr "クリエイターになる"
+
+msgid "User thumbnail"
+msgstr "ユーザーサムネイル"
+
+msgid "User"
+msgstr "ユーザー"
+
+msgid "Account Settings"
+msgstr "アカウント設定"
+
+msgid "Find channels, creators, and content."
+msgstr "チャンネル、クリエイター、コンテンツを見つける。"
+
+msgid "Discover trending and recommended content."
+msgstr "トレンドやおすすめのコンテンツを見つけよう。"
+
+msgid "Your Feed"
+msgstr "あなたのフィード"
+
+msgid "Welcome back! Here’s what’s new."
+msgstr "お帰りなさい！新着をご覧ください。"
+
+msgid "Browse and purchase premium content."
+msgstr "プレミアムコンテンツを閲覧・購入する。"

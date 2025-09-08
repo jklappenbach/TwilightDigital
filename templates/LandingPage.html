@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="{{ get_locale() }}">
+<head>
+    <meta charset="UTF-8"/>
+    <title>{{ _('Twilight Digital') }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='TwilightDigital.css') }}">
+</head>
+<body>
+<header class="top-panel">
+    <div class="top-inner">
+        <div class="left-tools">
+            <button class="hamburger" aria-label="{{ _('Menu') }}">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M3 6h18M3 12h18M3 18h18" stroke="white" stroke-opacity="0.9" stroke-width="2"
+                          stroke-linecap="round"/>
+                </svg>
+            </button>
+            <div class="search" role="search">
+                <input type="search" placeholder="{{ _('search for creators') }}" aria-label="{{ _('Search creators') }}"/>
+                <button class="icon-btn" aria-label="{{ _('Search') }}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7" stroke="white" stroke-opacity="0.9" stroke-width="2"/>
+                        <path d="M21 21l-3.5-3.5" stroke="white" stroke-opacity="0.9" stroke-width="2"
+                              stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="brand">{{ _('Twilight Digital') }}</div>
+        <div class="right-actions">
+            <a class="btn" href="{{ url_for('signin') }}">{{ _('Login') }}</a>
+            <a class="btn btn-accent" href="{{ url_for('create_account') }}">{{ _('Create Account') }}</a>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+    <section class="main">
+        <div class="card">
+            <h2>{{ _('Popular Creators') }}</h2>
+            <p class="muted">{{ _('Discover trending voices shaping the future.') }}</p>
+            {% set popular = popular or [
+          {"name": "NovaPulse", "tag": "@novapulse"},
+          {"name": "EchoFrame", "tag": "@echoframe"},
+          {"name": "LumenArc", "tag": "@lumenarc"},
+          {"name": "QuantumMuse", "tag": "@quantummuse"}
+        ] %}
+            {% for c in popular %}
+                <div class="creator">
+                    <div class="avatar" aria-hidden="true"></div>
+                    <div>
+                        <div class="fw-700">{{ c.name }}</div>
+                        <div class="muted">{{ c.tag }}</div>
+                    </div>
+                    <button class="btn btn-accent">{{ _('Follow') }}</button>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="card">
+            <h2>{{ _('Take Command of Your Destiny') }}</h2>
+            <p class="muted">{{ _('With Twilight Digital, creators own their audience, data, and revenue streams. Launch premium feeds, engage superfans, and turn momentum into meaningful growth.') }}</p>
+            <ul>
+                <li>{{ _('Publish once, reach everywhere') }}</li>
+                <li>{{ _('Direct fan relationships and memberships') }}</li>
+                <li>{{ _('Actionable analytics and seamless payouts') }}</li>
+            </ul>
+            <div class="actions-row">
+                <button class="btn btn-accent">{{ _('Start Creating') }}</button>
+                <button class="btn">{{ _('Learn More') }}</button>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="footer-inner">
+        <div>
+            <h4>{{ _('Twilight Digital') }}</h4>
+            <p class="muted">{{ _('Empowering creators to build, grow, and thrive.') }}</p>
+            <p class="muted mt-8">© 2025 {{ _('Twilight Digital') }}. {{ _('All rights reserved.') }}</p>
+        </div>
+        <div>
+            <h4>{{ _('Site Map') }}</h4>
+            <nav>
+                <div><a href="#">{{ _('Home') }}</a></div>
+                <div><a href="#">{{ _('Creators') }}</a></div>
+                <div><a href="#">{{ _('Pricing') }}</a></div>
+                <div><a href="#">{{ _('Blog') }}</a></div>
+            </nav>
+        </div>
+        <div>
+            <h4>{{ _('Company') }}</h4>
+            <nav>
+                <div><a href="#">{{ _('About') }}</a></div>
+                <div><a href="#">{{ _('Careers') }}</a></div>
+                <div><a href="#">{{ _('Press') }}</a></div>
+                <div><a href="#">{{ _('Contact') }}</a></div>
+            </nav>
+        </div>
+        <div>
+            <h4>{{ _('Legal') }}</h4>
+            <nav>
+                <div><a href="#">{{ _('Privacy') }}</a></div>
+                <div><a href="#">{{ _('Terms') }}</a></div>
+                <div><a href="#">{{ _('Cookies') }}</a></div>
+                <div><a href="#">{{ _('Accessibility') }}</a></div>
+            </nav>
+        </div>
+    </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,362 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: TwilightDigital\n"
+"Language: es\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Twilight Digital"
+msgstr "Twilight Digital"
+
+msgid "Menu"
+msgstr "Menú"
+
+msgid "search for creators"
+msgstr "buscar creadores"
+
+msgid "Search creators"
+msgstr "Buscar creadores"
+
+msgid "Search"
+msgstr "Buscar"
+
+msgid "Login"
+msgstr "Iniciar sesión"
+
+msgid "Create Account"
+msgstr "Crear cuenta"
+
+msgid "Popular Creators"
+msgstr "Creadores populares"
+
+msgid "Discover trending voices shaping the future."
+msgstr "Descubre voces en tendencia que dan forma al futuro."
+
+msgid "Follow"
+msgstr "Seguir"
+
+msgid "Take Command of Your Destiny"
+msgstr "Toma el control de tu destino"
+
+msgid "With Twilight Digital, creators own their audience, data, and revenue streams. Launch premium feeds, engage superfans, and turn momentum into meaningful growth."
+msgstr "Con Twilight Digital, los creadores poseen su audiencia, datos e ingresos. Lanza feeds premium, conecta con superfans y convierte el impulso en crecimiento."
+
+msgid "Publish once, reach everywhere"
+msgstr "Publica una vez, llega a todas partes"
+
+msgid "Direct fan relationships and memberships"
+msgstr "Relaciones directas con fans y suscripciones"
+
+msgid "Actionable analytics and seamless payouts"
+msgstr "Analíticas accionables y pagos sin fricciones"
+
+msgid "Start Creating"
+msgstr "Comenzar a crear"
+
+msgid "Learn More"
+msgstr "Más información"
+
+msgid "Empowering creators to build, grow, and thrive."
+msgstr "Impulsando a los creadores a construir, crecer y prosperar."
+
+msgid "All rights reserved."
+msgstr "Todos los derechos reservados."
+
+msgid "Site Map"
+msgstr "Mapa del sitio"
+
+msgid "Home"
+msgstr "Inicio"
+
+msgid "Creators"
+msgstr "Creadores"
+
+msgid "Pricing"
+msgstr "Precios"
+
+msgid "Blog"
+msgstr "Blog"
+
+msgid "Company"
+msgstr "Empresa"
+
+msgid "About"
+msgstr "Acerca de"
+
+msgid "Careers"
+msgstr "Empleos"
+
+msgid "Press"
+msgstr "Prensa"
+
+msgid "Contact"
+msgstr "Contacto"
+
+msgid "Legal"
+msgstr "Legal"
+
+msgid "Privacy"
+msgstr "Privacidad"
+
+msgid "Terms"
+msgstr "Términos"
+
+msgid "Cookies"
+msgstr "Cookies"
+
+msgid "Accessibility"
+msgstr "Accesibilidad"
+
+msgid "Please enter a valid email address."
+msgstr "Por favor, introduce una dirección de correo válida."
+
+msgid "Your %(app_name)s verification code"
+msgstr "Tu código de verificación de %(app_name)s"
+
+msgid "Failed to send verification email: %(error)s"
+msgstr "No se pudo enviar el correo de verificación: %(error)s"
+
+msgid "Your session has become corrupt.  Please try again later."
+msgstr "Tu sesión se ha dañado. Inténtalo de nuevo más tarde."
+
+msgid "Please enter the 6-digit verification code."
+msgstr "Introduce el código de verificación de 6 dígitos."
+
+msgid "This email does not match the address that requested a code."
+msgstr "Este correo no coincide con la dirección que solicitó un código."
+
+msgid "Stored code is invalid. Please request a new code."
+msgstr "El código almacenado no es válido. Solicita un código nuevo."
+
+msgid "The verification code has expired. Please request a new code."
+msgstr "El código de verificación ha caducado. Solicita un código nuevo."
+
+msgid "The verification code is incorrect."
+msgstr "El código de verificación es incorrecto."
+
+msgid "Email is required"
+msgstr "Se requiere correo electrónico"
+
+msgid "Invalid email format"
+msgstr "Formato de correo inválido"
+
+msgid "Failed to generate QR code"
+msgstr "Error al generar el código QR"
+
+msgid "Internal server error"
+msgstr "Error interno del servidor"
+
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgid "Create your account"
+msgstr "Crea tu cuenta"
+
+msgid "Join Twilight Digital to build, grow, and thrive."
+msgstr "Únete a Twilight Digital para construir, crecer y prosperar."
+
+msgid "Email"
+msgstr "Correo electrónico"
+
+msgid "you@example.com"
+msgstr "tú@ejemplo.com"
+
+msgid "Verification code"
+msgstr "Código de verificación"
+
+msgid "123 456"
+msgstr "123 456"
+
+msgid "Email Verification code"
+msgstr "Código de verificación por correo"
+
+msgid "Set up 2FA"
+msgstr "Configurar 2FA"
+
+msgid "2FA methods"
+msgstr "Métodos 2FA"
+
+msgid "Authenticator"
+msgstr "Autenticador"
+
+msgid "SMS"
+msgstr "SMS"
+
+msgid "Verify actions via codes sent to your configured email."
+msgstr "Verifica acciones mediante códigos enviados a tu correo configurado."
+
+msgid "Select"
+msgstr "Seleccionar"
+
+msgid "Use a TOTP authenticator app to generate one-time codes."
+msgstr "Usa una app autenticadora TOTP para generar códigos de un solo uso."
+
+msgid "Authenticator QR Code"
+msgstr "Código QR del autenticador"
+
+msgid "Preparing QR code…"
+msgstr "Preparando código QR…"
+
+msgid "1) Scan this QR in your authenticator app"
+msgstr "1) Escanea este QR en tu app autenticadora"
+
+msgid "2) Then enter the 6-digit code below"
+msgstr "2) Luego ingresa el código de 6 dígitos abajo"
+
+msgid "Enter Code"
+msgstr "Ingresar código"
+
+msgid "Authenticator code"
+msgstr "Código del autenticador"
+
+msgid "Verify"
+msgstr "Verificar"
+
+msgid "Receive codes via text message."
+msgstr "Recibe códigos por SMS."
+
+msgid "+1 555 123 4567"
+msgstr "+34 600 123 456"
+
+msgid "Phone number"
+msgstr "Número de teléfono"
+
+msgid "Link Phone"
+msgstr "Vincular teléfono"
+
+msgid "Support"
+msgstr "Soporte"
+
+msgid "Help Center"
+msgstr "Centro de ayuda"
+
+msgid "Sending..."
+msgstr "Enviando..."
+
+msgid "Submit Code"
+msgstr "Enviar código"
+
+msgid "Failed to load QR code."
+msgstr "No se pudo cargar el código QR."
+
+msgid "Failed to send code"
+msgstr "No se pudo enviar el código"
+
+msgid "Could not send code due to an internal error. Please try again later."
+msgstr "No se pudo enviar el código por un error interno. Inténtalo de nuevo más tarde."
+
+msgid "Submit"
+msgstr "Enviar"
+
+msgid "Verification failed."
+msgstr "La verificación falló."
+
+msgid "Network error verifying code. Please try again."
+msgstr "Error de red al verificar el código. Inténtalo de nuevo."
+
+msgid "Invalid OTP Code.  Please try again."
+msgstr "Código OTP inválido. Inténtalo de nuevo."
+
+msgid "Failed to send code:"
+msgstr "No se pudo enviar el código:"
+
+msgid "Sign In"
+msgstr "Iniciar sesión"
+
+msgid "Sign In • Twilight Digital"
+msgstr "Iniciar sesión • Twilight Digital"
+
+msgid "Sign in to your account"
+msgstr "Inicia sesión en tu cuenta"
+
+msgid "Welcome back to Twilight Digital."
+msgstr "Bienvenido de nuevo a Twilight Digital."
+
+msgid "Email Address"
+msgstr "Dirección de correo"
+
+msgid "Choose authentication method"
+msgstr "Elige el método de autenticación"
+
+msgid "Authentication methods"
+msgstr "Métodos de autenticación"
+
+msgid "OTP"
+msgstr "OTP"
+
+msgid "We'll send a verification code to your email address."
+msgstr "Te enviaremos un código de verificación a tu correo electrónico."
+
+msgid "Enter Verification Code"
+msgstr "Ingresa el código de verificación"
+
+msgid "123456"
+msgstr "123456"
+
+msgid "Resend Code"
+msgstr "Reenviar código"
+
+msgid "Enter the code from your authenticator app."
+msgstr "Ingresa el código de tu app autenticadora."
+
+msgid "Authenticator Code"
+msgstr "Código del autenticador"
+
+msgid "Failed to send verification code:"
+msgstr "No se pudo enviar el código de verificación:"
+
+msgid "Verifying..."
+msgstr "Verificando..."
+
+msgid "An error occurred. Please try again."
+msgstr "Ocurrió un error. Inténtalo de nuevo."
+
+msgid "Invalid authenticator code"
+msgstr "Código de autenticador inválido"
+
+msgid "Primary"
+msgstr "Principal"
+
+msgid "Feed"
+msgstr "Feed"
+
+msgid "Explore"
+msgstr "Explorar"
+
+msgid "Store"
+msgstr "Tienda"
+
+msgid "thumbnail"
+msgstr "miniatura"
+
+msgid "Default channel thumbnail"
+msgstr "Miniatura de canal predeterminada"
+
+msgid "No creators yet"
+msgstr "Aún no hay creadores"
+
+msgid "Become a creator"
+msgstr "Conviértete en creador"
+
+msgid "User thumbnail"
+msgstr "Miniatura de usuario"
+
+msgid "User"
+msgstr "Usuario"
+
+msgid "Account Settings"
+msgstr "Configuración de la cuenta"
+
+msgid "Find channels, creators, and content."
+msgstr "Encuentra canales, creadores y contenido."
+
+msgid "Discover trending and recommended content."
+msgstr "Descubre contenido en tendencia y recomendado."
+
+msgid "Your Feed"
+msgstr "Tu feed"
+
+msgid "Welcome back! Here’s what’s new."
+msgstr "¡Bienvenido de nuevo! Esto es lo nuevo."
+
+msgid "Browse and purchase premium content."
+msgstr "Explora y compra contenido premium."

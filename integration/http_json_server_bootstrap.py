@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+import json
+import time
+import urllib.request
+import urllib.error
+from threading import Thread
+
+from twilight_digital_api import create_app
+
+
+def _http_json(method, url, payload=None, timeout=5):
+    data = None
+    headers = {"Content-Type": "application/json"}
+    if payload is not None:
+        data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            body = resp.read().decode("utf-8")
+            ct = resp.headers.get("Content-Type", "")
+            if "application/json" in ct:
+                return resp.getcode(), json.loads(body)
+            return resp.getcode(), body
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8")
+        try:
+            parsed = json.loads(body)
+        except Exception:
+            parsed = body
+        return e.code, parsed
+    except urllib.error.URLError as e:
+        raise RuntimeError(f"Failed to reach {url}: {e}") from e
+
+
+def _wait_for_server(base_url, timeout=15):
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            code, _ = _http_json("GET", f"{base_url}/", None, timeout=2)
+            if code == 200:
+                return True
+        except Exception:
+            pass
+        time.sleep(0.3)
+    return False
+
+
+def main():
+    # Config
+    host = "127.0.0.1"
+    port = 5055
+    base_url = f"http://{host}:{port}"
+
+    # Start server in background thread
+    app = create_app()
+    t = Thread(target=lambda: app.run(host=host, port=port, debug=False, use_reloader=False))
+    t.daemon = True
+    t.start()
+
+    # Wait until server is healthy
+    if not _wait_for_server(base_url):
+        raise SystemExit("Server did not become ready in time")
+
+    # 1) Create a channel (required by the API for creating users)
+    channel_payload = {"title": "Publisher Channel", "description": "Primary content channel", "thumbnail_url": None}
+    code, channel_resp = _http_json("POST", f"{base_url}/channels", channel_payload)
+    if code != 201:
+        raise SystemExit(f"Failed to create channel: HTTP {code} {channel_resp}")
+    channel_id = channel_resp.get("channel_id")
+    print(f"Created channel: {channel_resp}")
+
+    # 2) Create a user with the 'Publisher' role and a catchy screen name
+    # Note: credential_config_id can be None as per API contract.
+    user_payload = {
+        "channel_id": channel_id,
+        "screen_name": "NovaPulse",  # catchy screen name
+        "credential_config_id": None,
+        "role": "Publisher",
+    }
+    code, user_resp = _http_json("POST", f"{base_url}/users", user_payload)
+    if code != 201:
+        raise SystemExit(f"Failed to create user: HTTP {code} {user_resp}")
+    print(f"Created user: {user_resp}")
+
+    # Optionally verify with a GET by id
+    user_id = user_resp.get("user_id")
+    code, fetched = _http_json("GET", f"{base_url}/users/{user_id}")
+    if code == 200:
+        print(f"Verified user fetch: {fetched}")
+    else:
+        print(f"Warning: could not verify user fetch, HTTP {code}: {fetched}")
+
+    print("Integration bootstrap complete.")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>{{ _('User') }} • {{ _('Twilight Digital') }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='TwilightDigital.css') }}">
+    <style>
+        :root {
+            --sidebar-w: min(16.5vw, 220px);
+        }
+
+        /* Left sidebar */
+        .sidebar {
+            position: fixed;
+            inset: 0 auto 0 0;
+            width: var(--sidebar-w);
+            display: flex;
+            flex-direction: column;
+            background: var(--card-bg);
+            border-right: 1px solid var(--frost-border);
+            z-index: 30;
+            height: 100vh; /* Fill viewport to allow flex to place bottom at the end */
+
+        }
+
+        .sidebar-scroll {
+
+            flex: 1 1 auto;
+            /* Avoid horizontal scroll while still allowing vertical scrolling for long lists */
+            overflow-y: auto;
+            overflow-x: hidden;
+            /* Remove container padding to prevent full-bleed header from forcing horizontal scroll */
+            padding: 0;
+            display: grid;
+            gap: 0;
+        }
+
+        /* Ensure the tablist only takes the space of its tabs (no extra growth/scroll) */
+        #sidebarTabs {
+            flex: 0 0 auto;
+            overflow: visible;
+            /* Let it size to its content to avoid unnecessary scroll */
+            height: auto;
+            /* Add local padding since container padding was removed */
+            padding: 10px 10px 0;
+        }
+
+        #sidebarCreators {
+            /* Reduced offset so tablist sizing doesn't force scroll */
+            margin-top: 10px;
+            padding: 0;
+        }
+
+        .creators-bar {
+            display: block;
+            /* Full-bleed without negative margins now that container padding is 0 */
+            margin: 0;
+            padding: 10px 12px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            border-radius: 0;
+            border: none;
+            background: var(--btn-bg);
+            color: var(--fg);
+            user-select: none;
+        }
+
+        .creators-list {
+            margin: 10px 0 0;
+            /* Restore comfortable left/right breathing room for items */
+            padding: 0 10px;
+            list-style: none;
+            display: grid;
+            gap: 8px;
+        }
+
+        .creator-item {
+            display: grid;
+            grid-template-columns: 28px 1fr;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--frost-border);
+            background: var(--card-bg);
+        }
+
+        .creator-thumb {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 1px solid var(--frost-border);
+            background: var(--frost);
+        }
+
+        .creator-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 600;
+        }
+
+
+        .side-item {
+            display: grid;
+            grid-auto-flow: column;
+            grid-template-columns: 28px 1fr;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            width: 90%;
+            margin: 8px auto;
+            box-sizing: border-box;
+            border-radius: 12px;
+            color: var(--fg);
+            text-decoration: none;
+            border: 1px solid transparent;
+            background: transparent;
+            cursor: pointer;
+            transition: background .15s ease, border-color .15s ease;
+        }
+
+        .side-item:hover {
+            background: var(--btn-bg-hover);
+            border-color: var(--frost-border);
+        }
+
+        .side-item[aria-selected="true"] {
+            background: linear-gradient(135deg, rgba(92, 200, 255, 0.2), rgba(255, 255, 255, 0.06));
+            border-color: rgba(92, 200, 255, 0.5);
+            box-shadow: 0 0 0 1px rgba(92, 200, 255, 0.2) inset;
+        }
+
+        .side-item .icon {
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            opacity: .9;
+        }
+
+        .side-item .label {
+            font-weight: 600;
+            letter-spacing: .02em;
+        }
+
+        /* Bottom, non-scrollable section */
+        .sidebar-bottom {
+            flex: 0 0 auto;
+            border-top: 1px solid var(--frost-border);
+            padding: 12px;
+            display: grid;
+            gap: 10px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+            margin-top: auto; /* Anchor to the bottom of the sidebar */
+        }
+
+        .create-creator {
+            display: grid;
+            grid-auto-flow: column;
+            grid-template-columns: 28px 1fr;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px dashed var(--frost-border);
+            background: var(--btn-bg);
+            cursor: pointer;
+            transition: background .15s ease, border-color .15s ease;
+        }
+
+        .create-creator:hover {
+            background: var(--btn-bg-hover);
+            border-color: rgba(92, 200, 255, 0.6);
+        }
+
+        .user-row {
+            display: grid;
+            grid-template-columns: 32px 1fr 24px;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 4px 2px;
+        }
+
+        .user-thumb {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: var(--frost);
+            border: 1px solid var(--frost-border);
+        }
+
+        .user-name {
+            display: block;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-menu-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 8px;
+            border: 1px solid var(--frost-border);
+            background: var(--btn-bg);
+            cursor: pointer;
+        }
+
+        .user-menu-btn:hover {
+            background: var(--btn-bg-hover);
+        }
+
+        /* Main content area shifted by sidebar */
+        .user-main {
+            margin-left: var(--sidebar-w);
+            padding: 18px 16px 0;
+        }
+
+        .user-main-inner {
+            max-width: var(--maxw);
+            margin: 0 auto;
+            padding: 10px 0 24px;
+        }
+
+        /* Right-side tab panels controlled by left sidebar */
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel[aria-hidden="false"] {
+            display: block;
+        }
+
+        /* Utility */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+<!-- Left Sidebar -->
+<aside class="sidebar" role="navigation" aria-label="{{ _('Primary') }}">
+    <div class="sidebar-tabs" id="sidebarTabs" role="tablist" aria-orientation="vertical">
+        <button class="side-item" type="button" id="tab-feed" role="tab" aria-controls="pane-feed"
+                aria-selected="true">
+        <span class="icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M4 6h16M4 12h12M4 18h8" stroke="white" stroke-opacity="0.9" stroke-width="2"
+                  stroke-linecap="round"/>
+          </svg>
+        </span>
+            <span class="label">{{ _('Feed') }}</span>
+        </button>
+        <button class="side-item" type="button" id="tab-search" role="tab" aria-controls="pane-search"
+                aria-selected="false">
+        <span class="icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="7" stroke="white" stroke-opacity="0.9" stroke-width="2"/>
+            <path d="M21 21l-3.5-3.5" stroke="white" stroke-opacity="0.9" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
+            <span class="label">{{ _('Search') }}</span>
+        </button>
+        <button class="side-item" type="button" id="tab-explore" role="tab" aria-controls="pane-explore"
+                aria-selected="false">
+        <span class="icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z" stroke="white" stroke-opacity="0.9" stroke-width="2"
+                  stroke-linejoin="round"/>
+          </svg>
+        </span>
+            <span class="label">{{ _('Explore') }}</span>
+        </button>
+        <button class="side-item" type="button" id="tab-store" role="tab" aria-controls="pane-store"
+                aria-selected="false">
+        <span class="icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M6 7h12l2 4H4l2-4z" stroke="white" stroke-opacity="0.9" stroke-width="2"
+                  stroke-linejoin="round"/>
+            <path d="M5 11v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" stroke="white" stroke-opacity="0.9"
+                  stroke-width="2"/>
+          </svg>
+        </span>
+            <span class="label">{{ _('Store') }}</span>
+        </button>
+    </div>
+    <div id="sidebarCreators" aria-label="{{ _('Creators') }}">
+        <div class="sidebar-scroll" id="sidebarScroll" aria-orientation="vertical"><span
+                class="creators-bar">{{ _('Creators') }}</span>
+            <ul class="creators-list">
+                {% if creators and creators|length > 0 %}
+                    {% for ch in creators %}
+                        <li class="creator-item">
+                            <img class="creator-thumb"
+                                 src="{{ ch.thumbnail_url if ch.thumbnail_url else url_for('static', filename='img/channel-default.png') }}"
+                                 alt="{{ ch.title }} {{ _('thumbnail') }}">
+                            <span class="creator-title">{{ ch.title }}</span>
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    <li class="creator-item">
+                        <img class="creator-thumb" src="{{ url_for('static', filename='img/channel-default.png') }}"
+                             alt="{{ _('Default channel thumbnail') }}">
+                        <span class="creator-title">{{ _('No creators yet') }}</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+    <div class="sidebar-bottom">
+        <button class="create-creator" type="button" aria-label="{{ _('Become a creator') }}">
+        <span class="icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5v14M5 12h14" stroke="white" stroke-opacity="0.9" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
+            <span class="label">{{ _('Become a creator') }}</span>
+        </button>
+        <div class="user-row">
+            <img class="user-thumb"
+                 src="{{ user.thumbnail_url if user and user.thumbnail_url else url_for('static', filename='img/user-default.png') }}"
+                 alt="{{ _('User thumbnail') }}"/>
+            <span class="user-name">{{ user.screen_name if user and user.screen_name else _('User') }}</span>
+            <button class="user-menu-btn" type="button" title="{{ _('Account Settings') }}" aria-label="{{ _('Account Settings') }}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M4 7h16M4 12h16M4 17h16" stroke="white" stroke-opacity="0.9" stroke-width="2"
+                          stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</aside>
+<main class="user-main">
+    <section class="user-main-inner">
+        <div id="pane-search" class="tab-panel" role="tabpanel" aria-labelledby="tab-search" aria-hidden="true">
+            <div class="card">
+                <h2>{{ _('Search') }}</h2>
+                <p class="muted">{{ _('Find channels, creators, and content.') }}</p>
+            </div>
+        </div>
+        <div id="pane-explore" class="tab-panel" role="tabpanel" aria-labelledby="tab-explore" aria-hidden="true">
+            <div class="card">
+                <h2>{{ _('Explore') }}</h2>
+                <p class="muted">{{ _('Discover trending and recommended content.') }}</p>
+            </div>
+        </div>
+        <div id="pane-feed" class="tab-panel" role="tabpanel" aria-labelledby="tab-feed" aria-hidden="false">
+            <div class="card">
+                <h2>{{ _('Your Feed') }}</h2>
+                <p class="muted">{{ _('Welcome back! Here’s what’s new.') }}</p>
+            </div>
+        </div>
+        <div id="pane-store" class="tab-panel" role="tabpanel" aria-labelledby="tab-store" aria-hidden="true">
+            <div class="card">
+                <h2>{{ _('Store') }}</h2>
+                <p class="muted">{{ _('Browse and purchase premium content.') }}</p>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+    (function () {
+        const tablist = document.getElementById('sidebarTabs');
+        if (!tablist) return;
+
+        const tabs = Array.from(tablist.querySelectorAll('[role="tab"]'));
+        const panels = new Map(
+            Array.from(document.querySelectorAll('.tab-panel')).map(p => [p.id, p])
+        );
+
+        function activate(tabEl) {
+            if (!tabEl) return;
+            tabs.forEach(t => t.setAttribute('aria-selected', String(t === tabEl)));
+            const targetId = tabEl.getAttribute('aria-controls');
+            panels.forEach((panel, id) => {
+                panel.setAttribute('aria-hidden', String(id !== targetId));
+            });
+            tabEl.focus();
+        }
+
+        tablist.addEventListener('click', (e) => {
+            const btn = e.target.closest('[role="tab"]');
+            if (btn) activate(btn);
+        });
+
+        tablist.addEventListener('keydown', (e) => {
+            const currentIndex = tabs.findIndex(t => t.getAttribute('aria-selected') === 'true');
+            if (currentIndex < 0) return;
+
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                const dir = e.key === 'ArrowDown' ? 1 : -1;
+                const next = tabs[(currentIndex + dir + tabs.length) % tabs.length];
+                activate(next);
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                activate(tabs[0]);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                activate(tabs[tabs.length - 1]);
+            } else if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                activate(tabs[currentIndex]);
+            }
+        });
+
+        // Ensure initial activation reflects markup
+        const initial = tabs.find(t => t.getAttribute('aria-selected') === 'true') || tabs[0];
+        activate(initial);
+    })();
+</script>
+</body>
+</html>

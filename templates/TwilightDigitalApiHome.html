@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Twilight Digital API — Service Status</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="/" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='TwilightDigital.css') }}">
+  <style>
+    :root { --ok: #2e7d32; --warn: #f9a825; --err: #c62828; --muted:#6c757d; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.45; margin: 0; background: #0b0f14; color: #e6eef7; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+    h1 { font-size: 1.6rem; margin: 0; }
+    .subtitle { color: var(--muted); font-size: .95rem; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 16px 0 22px; }
+    .card { background: #0f1520; border: 1px solid #1b2330; border-radius: 10px; padding: 16px; }
+    .card h3 { margin: 0 0 8px; font-size: 1rem; color: #b8c7dc; }
+    .stat { font-size: 1.15rem; margin: 4px 0; }
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .err { color: var(--err); }
+    .muted { color: var(--muted); }
+    .checks { margin-top: 10px; }
+    .check { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px dashed #263244; padding: 8px 0; font-size: .95rem; }
+    .check:first-child { border-top: 0; }
+    .pill { font-size: .8rem; padding: 2px 8px; border-radius: 999px; border: 1px solid #253045; color: #bed0ea; background: #111827; }
+    .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    button { background: #1b2638; color: #e6eef7; border: 1px solid #27344a; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+    button:hover { background: #22314a; }
+    details { margin-top: 14px; }
+    pre { background: #0a0f16; border: 1px solid #1a2534; border-radius: 8px; padding: 12px; overflow: auto; color: #cfe3ff; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .9rem; }
+    footer { margin-top: 22px; color: #7f8fa4; font-size: .9rem; }
+    a { color: #89b4ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Twilight Digital API — Service Status</h1>
+        <div class="subtitle">Real-time health overview of core endpoints and data access.</div>
+      </div>
+      <div class="btns">
+        <button id="runChecksBtn" title="Run all health checks now">Run health checks</button>
+        <button id="autoRefreshBtn" title="Toggle auto-refresh every 30s">Auto-refresh: Off</button>
+      </div>
+    </header>
+
+    <section class="cards">
+      <div class="card">
+        <h3>Overall Status</h3>
+        <div class="stat" id="overallStatus"><span class="muted">Awaiting checks…</span></div>
+        <div class="muted" id="overallNote">Run the checks to evaluate availability and data access.</div>
+      </div>
+
+      <div class="card">
+        <h3>Environment</h3>
+        <div class="stat">Origin: <span class="pill" id="originPill">—</span></div>
+        <div class="stat">Server time: <span id="serverTime">—</span></div>
+        <div class="stat">Page uptime: <span id="uptime">0s</span></div>
+      </div>
+
+      <div class="card">
+        <h3>Endpoint Response Times</h3>
+        <div class="check"><span>GET /channels</span><span id="rt-channels" class="muted">—</span></div>
+        <div class="check"><span>GET /users</span><span id="rt-users" class="muted">—</span></div>
+      </div>
+
+      <div class="card">
+        <h3>Data Summary</h3>
+        <div class="check"><span>Channels count</span><span id="count-channels" class="muted">—</span></div>
+        <div class="check"><span>Users count</span><span id="count-users" class="muted">—</span></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Detailed Checks</h3>
+      <div class="checks">
+        <div class="check">
+          <span>API Reachability</span>
+          <span id="chk-reach" class="muted">—</span>
+        </div>
+        <div class="check">
+          <span>CRUD: GET /channels</span>
+          <span id="chk-channels" class="muted">—</span>
+        </div>
+        <div class="check">
+          <span>CRUD: GET /users</span>
+          <span id="chk-users" class="muted">—</span>
+        </div>
+        <div class="check">
+          <span>Database Connectivity (inferred)</span>
+          <span id="chk-db" class="muted">—</span>
+        </div>
+      </div>
+
+      <details>
+        <summary>Raw results</summary>
+        <pre><code id="rawJson">{}</code></pre>
+      </details>
+    </section>
+
+    <footer>
+      This status page runs from the same service to validate core availability.
+      For assistance, contact your service administrator.
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      const fmtMs = (ms) => (ms == null ? '—' : `${Math.round(ms)} ms`);
+      const el = (id) => document.getElementById(id);
+      const setText = (id, text, cls) => {
+        const e = el(id);
+        if (!e) return;
+        e.textContent = text;
+        e.classList.remove('ok', 'warn', 'err', 'muted');
+        if (cls) e.classList.add(cls);
+      };
+      const startTime = Date.now();
+      let autoRefresh = false;
+      let timer;
+
+      const renderTime = () => {
+        setText('serverTime', new Date().toLocaleString());
+        const uptimeSec = Math.floor((Date.now() - startTime) / 1000);
+        const h = Math.floor(uptimeSec / 3600);
+        const m = Math.floor((uptimeSec % 3600) / 60);
+        const s = uptimeSec % 60;
+        const parts = [];
+        if (h) parts.push(`${h}h`);
+        if (m) parts.push(`${m}m`);
+        parts.push(`${s}s`);
+        setText('uptime', parts.join(' '));
+      };
+      setInterval(renderTime, 1000);
+      renderTime();
+      el('originPill').textContent = window.location.origin;
+
+      async function fetchWithTimeout(url, opts = {}, timeoutMs = 5000) {
+        const ctrl = new AbortController();
+        const id = setTimeout(() => ctrl.abort(), timeoutMs);
+        const t0 = performance.now();
+        try {
+          const res = await fetch(url, { ...opts, signal: ctrl.signal, headers: { 'Accept': 'application/json', ...(opts.headers || {}) } });
+          const t1 = performance.now();
+          let data = null;
+          try { data = await res.json(); } catch (_) { /* ignore */ }
+          return { ok: res.ok, status: res.status, ms: t1 - t0, data };
+        } catch (err) {
+          const t1 = performance.now();
+          return { ok: false, status: 0, ms: t1 - t0, error: err?.name || String(err) };
+        } finally {
+          clearTimeout(id);
+        }
+      }
+
+      function summarize(results) {
+        const reach = results.reach?.ok === true;
+        const channelsOk = results.channels?.ok === true && Array.isArray(results.channels?.data);
+        const usersOk = results.users?.ok === true && Array.isArray(results.users?.data);
+
+        // Infer DB: if at least one collection query succeeds with JSON array, likely DB is reachable
+        const dbOk = channelsOk || usersOk;
+
+        // Overall: OK if reachability and at least one CRUD list works
+        const overallOk = reach && dbOk;
+
+        setText('chk-reach', reach ? 'OK' : 'Failed', reach ? 'ok' : 'err');
+        setText('chk-channels', channelsOk ? 'OK' : `Failed${results.channels?.status ? ' (' + results.channels.status + ')' : ''}`, channelsOk ? 'ok' : 'err');
+        setText('chk-users', usersOk ? 'OK' : `Failed${results.users?.status ? ' (' + results.users.status + ')' : ''}`, usersOk ? 'ok' : 'err');
+        setText('chk-db', dbOk ? 'OK (inferred)' : 'Unavailable (inferred)', dbOk ? 'ok' : 'err');
+
+        setText('rt-channels', fmtMs(results.channels?.ms));
+        setText('rt-users', fmtMs(results.users?.ms));
+
+        const chCount = channelsOk ? results.channels.data.length : null;
+        const uCount = usersOk ? results.users.data.length : null;
+        setText('count-channels', chCount == null ? '—' : String(chCount));
+        setText('count-users', uCount == null ? '—' : String(uCount));
+
+        if (overallOk) {
+          setText('overallStatus', 'All checks passed', 'ok');
+          setText('overallNote', 'Core API endpoints are reachable and responding with data.');
+        } else if (reach) {
+          setText('overallStatus', 'Degraded', 'warn');
+          setText('overallNote', 'Service is reachable but one or more data checks failed.');
+        } else {
+          setText('overallStatus', 'Unavailable', 'err');
+          setText('overallNote', 'Service is not responding to basic reachability checks.');
+        }
+
+        const raw = {
+          timestamp: new Date().toISOString(),
+          results: {
+            reach: results.reach,
+            channels: results.channels,
+            users: results.users
+          }
+        };
+        el('rawJson').textContent = JSON.stringify(raw, null, 2);
+      }
+
+      async function runChecks() {
+        setText('overallStatus', 'Running checks…', 'muted');
+        setText('overallNote', 'Please wait while we evaluate endpoints.');
+        setText('rt-channels', '—', 'muted');
+        setText('rt-users', '—', 'muted');
+        setText('count-channels', '—', 'muted');
+        setText('count-users', '—', 'muted');
+        setText('chk-reach', '—', 'muted');
+        setText('chk-channels', '—', 'muted');
+        setText('chk-users', '—', 'muted');
+        setText('chk-db', '—', 'muted');
+
+        // Reachability: a lightweight HEAD or GET to this page
+        // Use GET because some setups don’t allow HEAD routes explicitly.
+        const reach = await fetchWithTimeout(window.location.pathname || '/', {}, 5000);
+
+        // Parallelize collection checks
+        const [channels, users] = await Promise.all([
+          fetchWithTimeout('/channels', {}, 7000),
+          fetchWithTimeout('/users', {}, 7000)
+        ]);
+
+        summarize({ reach, channels, users });
+      }
+
+      el('runChecksBtn').addEventListener('click', runChecks);
+
+      el('autoRefreshBtn').addEventListener('click', () => {
+        autoRefresh = !autoRefresh;
+        el('autoRefreshBtn').textContent = `Auto-refresh: ${autoRefresh ? 'On' : 'Off'}`;
+        if (autoRefresh) {
+          runChecks();
+          timer = setInterval(runChecks, 30000);
+        } else {
+          clearInterval(timer);
+        }
+      });
+
+      // Initial passive render; user can trigger checks
+      // Optionally, run once on load:
+      runChecks();
+    })();
+  </script>
+</body>
+</html>
