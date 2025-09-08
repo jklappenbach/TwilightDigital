@@ -18,11 +18,14 @@ from flask import Flask, request
 from flask_babel import Babel, gettext as _
 import base64
 import hashlib
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 app = Flask(__name__)
 
 EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
+# TODO Wire this up to secrets manager in the cloud prior to production release (e.g., AWS Secrets Manager)
+enc_secret_key = os.environ.get("APP_ENCRYPTION_KEY") or app.secret_key or "twilight-digital"
 
 # In-memory server-side session with 1-hour TTL
 class _TTLCache:
@@ -453,7 +456,6 @@ def create_otp_qrcode():
                          exc_info=True)
         return jsonify({"ok": False, "error": _("Internal server error")}), 500
 
-
 def _derive_key_bytes(secret: str) -> bytes:
     # Derive a 32-byte key from a secret string using SHA-256
     if not isinstance(secret, str):
@@ -478,6 +480,25 @@ def _xor_decrypt_from_b64(ciphertext_b64: str, secret: str) -> str:
         # Return empty string on failure; caller decides how to proceed
         return ""
 
+def _aes256_encrypt_to_b64(plaintext: str, secret: str) -> str:
+    # AES-256 GCM encryption, returns urlsafe base64(nonce + ciphertext|tag)
+    key = _derive_key_bytes(secret)  # 32 bytes (AES-256)
+    aesgcm = AESGCM(key)
+    nonce = os.urandom(12)  # 96-bit nonce recommended for GCM
+    ct = aesgcm.encrypt(nonce, plaintext.encode("utf-8"), None)
+    blob = nonce + ct
+    return base64.urlsafe_b64encode(blob).decode("ascii")
+
+def _aes256_decrypt_from_b64(ciphertext_b64: str, secret: str) -> str:
+    # AES-256 GCM decryption counterpart
+    try:
+        blob = base64.urlsafe_b64decode((ciphertext_b64 or "").encode("ascii"))
+        nonce, ct = blob[:12], blob[12:]
+        aesgcm = AESGCM(_derive_key_bytes(secret))
+        pt = aesgcm.decrypt(nonce, ct, None)
+        return pt.decode("utf-8")
+    except Exception:
+        return ""
 
 @app.route("/verify-otp-code", methods=["POST"])
 def verify_otp_code():
@@ -511,13 +532,12 @@ def verify_otp_code():
                 status, resp = _http_json("GET", f"{base_url}/credential_configs/by_email/{email}")
                 if status == 200 and isinstance(resp, list):
                     # Prefer Authenticator_2FA records
-                    enc_secret_key = os.environ.get("APP_ENCRYPTION_KEY") or app.secret_key or "deep-signal"
                     for item in resp:
                         try:
                             credential_config = item
                             if (credential_config or {}).get("credential_type") == "Authenticator_2FA":
                                 enc = (credential_config or {}).get("encrypted_credential") or ""
-                                decrypted = _xor_decrypt_from_b64(enc, enc_secret_key)
+                                decrypted = _aes256_decrypt_from_b64(enc, enc_secret_key)
                                 if decrypted:
                                     otp_secret = decrypted
                                     app.logger.info("verify_otp_code: Recovered otp_secret from credential_configs")
@@ -543,7 +563,7 @@ def verify_otp_code():
 
         # Encrypt otp_uri for storage
         enc_secret = os.environ.get("APP_ENCRYPTION_KEY") or app.secret_key or "deep-signal"
-        encrypted_credential = _xor_encrypt_to_b64(otp_secret, enc_secret)
+        encrypted_credential = _aes256_encrypt_to_b64(otp_secret, enc_secret)
 
         # Persist credential config via Twilight Digital API if we don't have it
         if base_url and credential_config is None:
