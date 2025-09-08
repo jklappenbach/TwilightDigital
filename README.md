@@ -109,7 +109,7 @@ You may also supply a JSON config that controls host/port and an external URL:
   }
 If not provided, defaults are host=0.0.0.0 and port=8080.
 
-## 7) Launch the Server
+## 7) Launch the Server and API
 Ensure:
 - MongoDB is running.
 - Your virtual environment is activated.
@@ -118,18 +118,29 @@ Ensure:
 Start the API:
 - `python twilight_digital_api.py`
 
-By default the server listens on:
+By default the API listens on:
 - Host: 0.0.0.0
 - Port: 8080
+
+Start the Webserver:
+- `python app.py`
+
+Be default, the webserver listens on:
+- Host: 0.0.0.0
+- Port: 5000
 
 If using the optional JSON config, host/port may differ accordingly.
 
 ## 8) Open the Application
 - Navigate to the homepage in your browser:
+  - http://localhost:5000/
+- Check to see if the API is running:
   - http://localhost:8080/
-- Example API checks (GET requests):
-  - http://localhost:8080/users
-  - http://localhost:8080/channels
+
+## 9) Unit tests
+You can run unit tests using pytest:
+- `python -m tests.test_app`
+- `python -m tests.test_twilight_digital_api`
 
 ## Troubleshooting
 - Port already in use: choose a different port via the runtime config JSON (set TWILIGHT_DIGITAL_CONFIG) or stop the process using 8080.
@@ -140,3 +151,4 @@ If using the optional JSON config, host/port may differ accordingly.
   - Re-run the activation command (`source .venv/bin/activate` or `.venv\Scripts\activate`).
 
 ## License
+Released under the MIT license

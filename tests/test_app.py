@@ -3,7 +3,9 @@ import json
 import unittest
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timedelta, timezone
+import sys
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import the Flask app object from app.py
 import app
