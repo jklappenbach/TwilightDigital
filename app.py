@@ -346,7 +346,7 @@ def generate_otp_uri():
         raise ValueError("Invalid email format")
 
     try:
-        issuer = os.environ.get("APP_NAME", "Deep Signal")
+        issuer = os.environ.get("APP_NAME", "Twilight Digital")
         # Generate a base32 secret and build TOTP provisioning URI
         secret = pyotp.random_base32()
         session["otp_secret"] = secret
@@ -357,8 +357,6 @@ def generate_otp_uri():
         label = f"{issuer}:{email}".replace(" ", "%20")  # keep '@' intact to satisfy tests
         uri = f"otpauth://totp/{label}?secret={secret}&issuer={issuer_enc}"
         # Persist the full URI for downstream verification flows
-        session["otp_uri"] = uri
-
         app.logger.info("generate_otp_uri: successfully generated otpauth URI")
         return uri
     except Exception as ex:
@@ -469,6 +467,18 @@ def _xor_encrypt_to_b64(plaintext: str, secret: str) -> str:
     ct = bytes(b ^ key[i % len(key)] for i, b in enumerate(pt))
     return base64.urlsafe_b64encode(ct).decode("ascii")
 
+def _xor_decrypt_from_b64(ciphertext_b64: str, secret: str) -> str:
+    # Decrypt counterpart to _xor_encrypt_to_b64
+    try:
+        ct = base64.urlsafe_b64decode((ciphertext_b64 or "").encode("ascii"))
+        key = _derive_key_bytes(secret)
+        pt = bytes(b ^ key[i % len(key)] for i, b in enumerate(ct))
+        return pt.decode("utf-8")
+    except Exception:
+        # Return empty string on failure; caller decides how to proceed
+        return ""
+
+
 @app.route("/verify-otp-code", methods=["POST"])
 def verify_otp_code():
     """
@@ -488,21 +498,44 @@ def verify_otp_code():
         user_id = session.get("user_id")
         otp_secret = session.get("otp_secret")
         email = session.get("email")
+        base_url = os.environ.get("TWILIGHT_DIGITAL_API_BASE_URL", "").rstrip("/")
+        credential_config = None
 
         if not code or not code.isdigit():
             return jsonify(ok=False)
-        if not user_id:
-            app.logger.warning("verify_otp_code: Missing user_id in session")
+        if not base_url:
+            app.logger.error(f"verify_otp_code: TWILIGHT_DIGITAL_API_BASE_URL not configured - user_id={user_id}")
             return jsonify(ok=False)
         if not otp_secret:
-            app.logger.warning("verify_otp_code: Missing otp_secret in session for user_id=%s", user_id)
+            try:
+                status, resp = _http_json("GET", f"{base_url}/credential_configs/by_email/{email}")
+                if status == 200 and isinstance(resp, list):
+                    # Prefer Authenticator_2FA records
+                    enc_secret_key = os.environ.get("APP_ENCRYPTION_KEY") or app.secret_key or "deep-signal"
+                    for item in resp:
+                        try:
+                            credential_config = item
+                            if (credential_config or {}).get("credential_type") == "Authenticator_2FA":
+                                enc = (credential_config or {}).get("encrypted_credential") or ""
+                                decrypted = _xor_decrypt_from_b64(enc, enc_secret_key)
+                                if decrypted:
+                                    otp_secret = decrypted
+                                    app.logger.info("verify_otp_code: Recovered otp_secret from credential_configs")
+                                    break
+                        except Exception:
+                            # Keep iterating on malformed items
+                            continue
+                else:
+                    app.logger.error(f"verify_otp_code: Failed to fetch credential_configs: HTTP {status} {resp}")
+            except Exception as ex:
+                app.logger.error(f"verify_otp_code: error fetching credential_configs by email: {ex}")
 
         try:
             totp = pyotp.TOTP(otp_secret)
             if totp.verify(code, valid_window=1) is False:
                 return jsonify(ok=False)
         except Exception as ex:
-            app.logger.error(f"verify_otp_code: Invalid otp_uri in session: {ex}")
+            app.logger.error(f"verify_otp_code: Invalid otp data in session: {ex}")
             return jsonify(ok=False)
 
         # Mark the current user in the session, they're logged in!
@@ -512,10 +545,8 @@ def verify_otp_code():
         enc_secret = os.environ.get("APP_ENCRYPTION_KEY") or app.secret_key or "deep-signal"
         encrypted_credential = _xor_encrypt_to_b64(otp_secret, enc_secret)
 
-        # Persist credential config via Twilight Digital API
-        base_url = os.environ.get("TWILIGHT_DIGITAL_API_BASE_URL", "").rstrip("/")
-
-        if base_url:
+        # Persist credential config via Twilight Digital API if we don't have it
+        if base_url and credential_config is None:
             try:
                 payload = {
                     "user_id": user_id,
