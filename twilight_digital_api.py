@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 import logging
 from pathlib import Path
 
+
 def create_app(mdb=None):
     app = Flask(__name__)
 
@@ -31,7 +32,6 @@ def create_app(mdb=None):
     CONTACT_TYPES = ["Phone", "Email_Address", "Push_Notification"]
     CREDENTIAL_TYPES = ["OAuth", "Authenticator_2FA", "Email_2FA", "SMS_2FA"]
     ROLES = ["Creator", "Subscriber", "Admin", "Support"]
-
 
     # Entity registry describing endpoint names, id fields, and validations
     ENTITIES = {
@@ -215,6 +215,241 @@ def create_app(mdb=None):
         cleaned.pop("_id", None)
         return cleaned
 
+    # ---- OpenAPI generation ----
+    def _entity_to_schema(entity_name: str, cfg: dict, for_update: bool = False) -> dict:
+        """
+        Translate ENTITIES entry into an OpenAPI schema.
+        For updates, we omit 'required' to allow partial PATCH documents.
+        """
+        id_field = cfg.get("id_field")
+        required_fields = list(cfg.get("required", []))
+        optional_fields = list(cfg.get("optional", []))
+        enums = cfg.get("enums", {})
+
+        props = {}
+        for field in sorted(set(required_fields + optional_fields + [id_field])):
+            field_schema = {"type": "string"}
+            if field in enums:
+                field_schema["enum"] = list(enums[field])
+            props[field] = field_schema
+
+        schema = {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": props,
+        }
+        if not for_update:
+            # For create/read schemas include required list (excluding None/empty)
+            req = [f for f in required_fields if f]
+            if id_field and id_field not in req:
+                # ID may be generated if omitted on create, but it's always present in read responses.
+                # We'll not force it on create; responses will include it.
+                pass
+            if req:
+                schema["required"] = req
+        return schema
+
+    def _build_openapi_document() -> dict:
+        # Base metadata
+        info = {
+            "title": "Twilight Digital API",
+            "version": "1.0.0",
+            "description": "OpenAPI 3.0 specification generated from the API's entity registry and routes.",
+        }
+
+        servers = []
+        external_url = app.config.get("EXTERNAL_URL") or os.getenv("TWILIGHT_DIGITAL_API_BASE_URL")
+        if external_url:
+            servers.append({"url": external_url.rstrip("/")})
+        else:
+            servers.append({"url": "http://localhost:8080"})
+
+        # Components: common error and per-entity schemas
+        components = {"schemas": {}}
+        components["schemas"]["Error"] = {
+            "type": "object",
+            "properties": {"error": {"type": "string"}},
+            "required": ["error"],
+            "additionalProperties": False,
+        }
+
+        # Create read/create schemas and update schemas per entity
+        for name, cfg in ENTITIES.items():
+            read_schema_name = name
+            create_schema_name = read_schema_name  # same structure; required applies
+            update_schema_name = f"{read_schema_name}_update"
+
+            components["schemas"][create_schema_name] = _entity_to_schema(name, cfg, for_update=False)
+            components["schemas"][update_schema_name] = _entity_to_schema(name, cfg, for_update=True)
+
+        paths = {}
+
+        # CRUD paths per entity
+        for name, cfg in ENTITIES.items():
+            id_field = cfg.get("id_field")
+            read_schema_name = name
+            update_schema_name = f"{read_schema_name}_update"
+
+            # Collection path
+            paths[f"/{name}"] = {
+                "get": {
+                    "summary": f"List {name}",
+                    "operationId": f"list_{name}",
+                    "responses": {
+                        "200": {
+                            "description": "List of items",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "array",
+                                        "items": {"$ref": f"#/components/schemas/{read_schema_name}"},
+                                    }
+                                }
+                            },
+                        },
+                        "500": {"description": "Server error",
+                                "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}},
+                    },
+                },
+                "post": {
+                    "summary": f"Create {read_schema_name}",
+                    "operationId": f"create_{read_schema_name.lower()}",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": f"#/components/schemas/{read_schema_name}"}
+                            }
+                        },
+                    },
+                    "responses": {
+                        "201": {
+                            "description": "Created",
+                            "content": {
+                                "application/json": {"schema": {"$ref": f"#/components/schemas/{read_schema_name}"}}},
+                        },
+                        "400": {"description": "Validation error",
+                                "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}},
+                    },
+                },
+            }
+
+            # Item path
+            paths[f"/{name}/{{item_id}}"] = {
+                "parameters": [
+                    {
+                        "name": "item_id",
+                        "in": "path",
+                        "required": True,
+                        "schema": {"type": "string"},
+                        "description": f"{id_field}",
+                    }
+                ],
+                "get": {
+                    "summary": f"Get {read_schema_name}",
+                    "operationId": f"get_{read_schema_name.lower()}",
+                    "responses": {
+                        "200": {"description": "OK", "content": {
+                            "application/json": {"schema": {"$ref": f"#/components/schemas/{read_schema_name}"}}}},
+                        "404": {"description": "Not found",
+                                "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}},
+                    },
+                },
+                "patch": {
+                    "summary": f"Update {read_schema_name}",
+                    "operationId": f"update_{read_schema_name.lower()}",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {"schema": {"$ref": f"#/components/schemas/{update_schema_name}"}}},
+                    },
+                    "responses": {
+                        "200": {"description": "Updated", "content": {
+                            "application/json": {"schema": {"$ref": f"#/components/schemas/{read_schema_name}"}}}},
+                        "400": {"description": "Validation error",
+                                "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}},
+                        "404": {"description": "Not found",
+                                "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}},
+                    },
+                },
+                "delete": {
+                    "summary": f"Delete {read_schema_name}",
+                    "operationId": f"delete_{read_schema_name.lower()}",
+                    "responses": {
+                        "200": {
+                            "description": "Deleted",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {"deleted_id": {"type": "string"}},
+                                        "required": ["deleted_id"],
+                                        "additionalProperties": False,
+                                    }
+                                }
+                            },
+                        },
+                        "404": {"description": "Not found",
+                                "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}},
+                    },
+                },
+            }
+
+        # Extra lookups
+        paths["/users/by_email/{email}"] = {
+            "get": {
+                "summary": "Get user by email",
+                "operationId": "get_user_by_email",
+                "parameters": [{"name": "email", "in": "path", "required": True, "schema": {"type": "string"}}],
+                "responses": {
+                    "200": {"description": "OK",
+                            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Users"}}}},
+                    "404": {"description": "Not found",
+                            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}},
+                },
+            }
+        }
+        paths["/credential_configs/by_email/{email}"] = {
+            "get": {
+                "summary": "List credential configs by email",
+                "operationId": "get_credential_configs_by_email",
+                "parameters": [{"name": "email", "in": "path", "required": True, "schema": {"type": "string"}}],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {"type": "array",
+                                           "items": {"$ref": "#/components/schemas/Credential_configs"}}
+                            }
+                        },
+                    },
+                },
+            }
+        }
+
+        # Assemble OpenAPI document
+        openapi = {
+            "openapi": "3.0.3",
+            "info": info,
+            "servers": servers,
+            "paths": paths,
+            "components": components,
+        }
+        return openapi
+
+    @app.route("/openapi.json", methods=["GET"])
+    def openapi_spec():
+        """
+        Returns OpenAPI 3.0 JSON describing this API.
+        """
+        try:
+            doc = _build_openapi_document()
+            return jsonify(doc), 200
+        except Exception as ex:
+            app.logger.error("Failed to build OpenAPI document: %s", str(ex), exc_info=True)
+            return jsonify(error="Failed to generate OpenAPI spec"), 500
+
     # Generic route factory
     def register_crud_routes(collection_name):
         cfg = _entity_config(collection_name)
@@ -252,7 +487,8 @@ def create_app(mdb=None):
                 for d in cursor:
                     items.append(_strip_mongo_id(d))
             except TypeError as e:
-                app.logger.error("Database find signature error on GET /%s: %s. Falling back without limit kwarg.", collection_name, str(e), exc_info=True)
+                app.logger.error("Database find signature error on GET /%s: %s. Falling back without limit kwarg.",
+                                 collection_name, str(e), exc_info=True)
                 try:
                     items = [_strip_mongo_id(d) for d in collection.find({})][:100]
                 except Exception as e2:
@@ -274,7 +510,8 @@ def create_app(mdb=None):
                 try:
                     doc = collection.find_one({id_field: item_id})
                 except Exception as e:
-                    app.logger.error("Database read error on GET /%s/%s: %s", collection_name, item_id, str(e), exc_info=True)
+                    app.logger.error("Database read error on GET /%s/%s: %s", collection_name, item_id, str(e),
+                                     exc_info=True)
                     return jsonify(error=str(e)), 500
                 if not doc:
                     app.logger.error("Not found on GET /%s/%s", collection_name, item_id)
@@ -287,7 +524,8 @@ def create_app(mdb=None):
                 try:
                     existing = collection.find_one({id_field: item_id})
                 except Exception as e:
-                    app.logger.error("Database read error before PATCH /%s/%s: %s", collection_name, item_id, str(e), exc_info=True)
+                    app.logger.error("Database read error before PATCH /%s/%s: %s", collection_name, item_id, str(e),
+                                     exc_info=True)
                     return jsonify(error=str(e)), 500
                 if not existing:
                     app.logger.error("Not found on PATCH /%s/%s", collection_name, item_id)
@@ -299,13 +537,15 @@ def create_app(mdb=None):
                 try:
                     collection.update_one({id_field: item_id}, {"$set": updated})
                 except Exception as e:
-                    app.logger.error("Database update error on PATCH /%s/%s: %s", collection_name, item_id, str(e), exc_info=True)
+                    app.logger.error("Database update error on PATCH /%s/%s: %s", collection_name, item_id, str(e),
+                                     exc_info=True)
                     return jsonify(error=str(e)), 400
                 try:
                     # Re-fetch to return the latest state
                     current = collection.find_one({id_field: item_id})
                 except Exception as e:
-                    app.logger.error("Database read-back error after PATCH /%s/%s: %s", collection_name, item_id, str(e), exc_info=True)
+                    app.logger.error("Database read-back error after PATCH /%s/%s: %s", collection_name, item_id,
+                                     str(e), exc_info=True)
                     return jsonify(error=str(e)), 500
                 return jsonify(_strip_mongo_id(current)), 200
 
@@ -314,7 +554,8 @@ def create_app(mdb=None):
             try:
                 res = collection.delete_one({id_field: item_id})
             except Exception as e:
-                app.logger.error("Database delete error on DELETE /%s/%s: %s", collection_name, item_id, str(e), exc_info=True)
+                app.logger.error("Database delete error on DELETE /%s/%s: %s", collection_name, item_id, str(e),
+                                 exc_info=True)
                 return jsonify(error=str(e)), 500
             deleted = getattr(res, "deleted_count", 1)
             if deleted == 0:
@@ -326,7 +567,8 @@ def create_app(mdb=None):
     def index():
         # Render the home page using Jinja template
         from flask import render_template
-        app.logger.info("GET / (render home) remote_addr=%s user_agent=%s", request.remote_addr, request.headers.get("User-Agent"))
+        app.logger.info("GET / (render home) remote_addr=%s user_agent=%s", request.remote_addr,
+                        request.headers.get("User-Agent"))
         return render_template("TwilightDigitalApiHome.html"), 200
 
     @app.route("/users/by_email/<path:email>", methods=["GET"])
@@ -354,10 +596,12 @@ def create_app(mdb=None):
             try:
                 items = [_strip_mongo_id(d) for d in mdb["credential_configs"].find({"email": email})][:100]
             except Exception as e2:
-                app.logger.error("Database find error on GET /credential_configs/by_email/%s: %s", email, str(e2), exc_info=True)
+                app.logger.error("Database find error on GET /credential_configs/by_email/%s: %s", email, str(e2),
+                                 exc_info=True)
                 return jsonify(error=str(e2)), 500
         except Exception as e:
-            app.logger.error("Database find error on GET /credential_configs/by_email/%s: %s", email, str(e), exc_info=True)
+            app.logger.error("Database find error on GET /credential_configs/by_email/%s: %s", email, str(e),
+                             exc_info=True)
             return jsonify(error=str(e)), 500
         return jsonify(items), 200
 
@@ -367,8 +611,10 @@ def create_app(mdb=None):
 
     return app
 
+
 # Default app instance uses real Mongo (or env-configured)
 app = create_app()
+
 
 def _load_runtime_config():
     """
@@ -385,6 +631,7 @@ def _load_runtime_config():
     except Exception:
         app.logger.exception("Failed to load runtime config from %s", cfg_path)
         return {}
+
 
 if __name__ == "__main__":
     cfg = _load_runtime_config()
