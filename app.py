@@ -26,6 +26,7 @@ EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
 # TODO Wire this up to secrets manager in the cloud prior to production release (e.g., AWS Secrets Manager)
 enc_secret_key = os.environ.get("APP_ENCRYPTION_KEY") or app.secret_key or "twilight-digital"
+base_url = os.environ.get('TWILIGHT_DIGITAL_API_BASE_URL', '').rstrip('/')
 
 # In-memory server-side session with 1-hour TTL
 class _TTLCache:
@@ -294,9 +295,6 @@ def verify_email_code():
     session['email'] = email
     session.pop('email_code_entry', None)
 
-    # Write the user to the database, we've verified the address, and now need to potentially create a new OTP secret
-    base_url = os.environ.get('TWILIGHT_DIGITAL_API_BASE_URL', '').rstrip('/')
-
     created_user_id = None
     if base_url:
         try:
@@ -518,8 +516,7 @@ def verify_otp_code():
         code = (data.get("code") or "").strip()
         user_id = session.get("user_id")
         otp_secret = session.get("otp_secret")
-        email = session.get("email")
-        base_url = os.environ.get("TWILIGHT_DIGITAL_API_BASE_URL", "").rstrip("/")
+        email = data.get("email") or session.get("email")
         credential_config = None
 
         if not code or not code.isdigit():
@@ -586,9 +583,42 @@ def verify_otp_code():
         return jsonify(ok=False)
     return jsonify(ok=True)
 
-@app.route('/deep-signal-user-page')
-def twilight_digital_user_page():
-    return render_template("UserPage.html", sid=session.sid)
+@app.route('/user-page')
+def user_page():
+    # Attempt to resolve current user's id
+    user_id = session.get("current_user") or session.get("user_id")
+
+    # Prepare containers
+    my_channels = []
+    subscriptions = []
+
+    # Load channels created by this user (creator_id = user_id)
+    if base_url and user_id:
+        try:
+            status, resp = _http_json("GET", f"{base_url}/channels/by_creator_id/{user_id}")
+            if status == 200 and isinstance(resp, list):
+                my_channels = resp
+            else:
+                app.logger.error(f"Failed to load channels for creator_id={user_id}: HTTP {status} {resp}")
+        except Exception as ex:
+            app.logger.exception(f"Error loading channels for creator_id={user_id}: {ex}")
+
+        # Load subscriptions for this user (by user_id)
+        try:
+            status, resp = _http_json("GET", f"{base_url}/subscriptions/by_user_id/{user_id}")
+            if status == 200 and isinstance(resp, list):
+                subscriptions = resp
+            else:
+                app.logger.error(f"Failed to load subscriptions for user_id={user_id}: HTTP {status} {resp}")
+        except Exception as ex:
+            app.logger.exception(f"Error loading subscriptions for user_id={user_id}: {ex}")
+    else:
+        if not base_url:
+            app.logger.warning("TWILIGHT_DIGITAL_API_BASE_URL not configured; skipping data prefetch for UserPage")
+        if not user_id:
+            app.logger.info("No user_id in session; skipping channels/subscriptions prefetch")
+
+    return render_template("UserPage.html", sid=session.sid, channels=my_channels, subscriptions=subscriptions)
 
 if __name__ == '__main__':
     app.run()

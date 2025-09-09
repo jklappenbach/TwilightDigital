@@ -325,7 +325,7 @@
                 const result = await response.json();
 
                 if (response.ok && result.ok) {
-                    window.location.href = "{{ url_for('twilight_digital_user_page') }}";
+                    window.location.href = "{{ url_for('user_page') }}";
                 } else {
                     showCodeError(result.error || I18N.invalidCode);
                     emailCodeInput.focus();
@@ -358,6 +358,7 @@
         // OTP verification using fetchWithSession -> verify_otp_code
         verifyOtpBtn.addEventListener('click', async () => {
             const otpCode = otpCodeInput.value.trim();
+            const email = emailInput.value.trim();
             if (!otpCode) {
                 otpCodeInput.focus();
                 otpCodeInput.setCustomValidity("{{ _('Please enter your authenticator code') }}");
@@ -373,12 +374,12 @@
                 const response = await fetchWithSession("{{ url_for('verify_otp_code') }}", {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code: otpCode })
+                    body: JSON.stringify({ code: otpCode, email: email })
                 });
                 const result = await response.json();
 
                 if (response.ok && result.ok) {
-                    window.location.href = "{{ url_for('twilight_digital_user_page') }}";
+                    window.location.href = "{{ url_for('user_page') }}";
                 } else {
                     throw new Error(I18N.invalidAuthenticatorCode);
 

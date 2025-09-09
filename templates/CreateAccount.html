@@ -361,7 +361,7 @@
                                         otpCodeField?.setCustomValidity(I18N.invalidOtpCode);
                                         otpCodeField?.reportValidity();
                                     } else {
-                                        window.location.href = '{{ url_for("twilight_digital_user_page") }}';
+                                        window.location.href = '{{ url_for("user_page") }}';
                                     }
                                 } catch (e) {
                                     alert(I18N.failedToSendCodePrefix + ' ' + e.message);

@@ -46,7 +46,7 @@
             padding: 10px 10px 0;
         }
 
-        #sidebarCreators {
+        #sidebarChannels {
             /* Reduced offset so tablist sizing doesn't force scroll */
             margin-top: 10px;
             padding: 0;
@@ -291,10 +291,21 @@
         </span>
             <span class="label">{{ _('Store') }}</span>
         </button>
+        <!-- New top tab for Creators -->
+        <button class="side-item" type="button" id="tab-creators" role="tab" aria-controls="pane-creators"
+                aria-selected="false">
+        <span class="icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z" stroke="white" stroke-opacity="0.9" stroke-width="2"
+                  stroke-linejoin="round"/>
+          </svg>
+        </span>
+            <span class="label">{{ _('Creators') }}</span>
+        </button>
     </div>
-    <div id="sidebarCreators" aria-label="{{ _('Creators') }}">
+    <div id="sidebarChannels" aria-label="{{ _('Channels') }}">
         <div class="sidebar-scroll" id="sidebarScroll" aria-orientation="vertical"><span
-                class="creators-bar">{{ _('Creators') }}</span>
+                class="creators-bar">{{ _('Channels') }}</span>
             <ul class="creators-list">
                 {% if creators and creators|length > 0 %}
                     {% for ch in creators %}
@@ -309,12 +320,29 @@
                     <li class="creator-item">
                         <img class="creator-thumb" src="{{ url_for('static', filename='img/channel-default.png') }}"
                              alt="{{ _('Default channel thumbnail') }}">
-                        <span class="creator-title">{{ _('No creators yet') }}</span>
+                        <span class="creator-title">{{ _('No channels yet') }}</span>
                     </li>
                 {% endif %}
             </ul>
         </div>
     </div>
+    {% if my_channels and my_channels|length > 0 %}
+    <div id="sidebarMyChannels" aria-label="{{ _('My Channels') }}">
+        <div class="sidebar-scroll" aria-orientation="vertical">
+            <span class="creators-bar">{{ _('My Channels') }}</span>
+            <ul class="creators-list">
+                {% for ch in my_channels %}
+                    <li class="creator-item">
+                        <img class="creator-thumb"
+                             src="{{ ch.thumbnail_url if ch.thumbnail_url else url_for('static', filename='img/channel-default.png') }}"
+                             alt="{{ ch.title }} {{ _('thumbnail') }}">
+                        <span class="creator-title">{{ ch.title }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
     <div class="sidebar-bottom">
         <button class="create-creator" type="button" aria-label="{{ _('Become a creator') }}">
         <span class="icon" aria-hidden="true">
@@ -362,6 +390,13 @@
             <div class="card">
                 <h2>{{ _('Store') }}</h2>
                 <p class="muted">{{ _('Browse and purchase premium content.') }}</p>
+            </div>
+        </div>
+        <!-- New panel for Creators -->
+        <div id="pane-creators" class="tab-panel" role="tabpanel" aria-labelledby="tab-creators" aria-hidden="true">
+            <div class="card">
+                <h2>{{ _('Creators') }}</h2>
+                <p class="muted">{{ _('Manage and discover creators.') }}</p>
             </div>
         </div>
     </section>

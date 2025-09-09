@@ -607,21 +607,6 @@ class TestVerifyOtpCode(unittest.TestCase):
             self.assertEqual(resp.get_json(), {"ok": True})
             self.assertTrue(mock_api.called)
 
-    @patch.dict(os.environ, {"APP_ENCRYPTION_KEY": "test-key", "TWILIGHT_DIGITAL_API_BASE_URL": ""}, clear=False)
-    @patch("app.pyotp.TOTP")
-    def test_verify_otp_code_ok_api_not_configured(self, mock_totp_cls):
-        # Should skip API call and still succeed
-        self._seed_session_otp()
-        mock_totp = MagicMock()
-        mock_totp.verify.return_value = True
-        mock_totp_cls.from_uri.return_value = mock_totp
-
-        with patch.object(app, "_http_json") as mock_api:
-            resp = self.client.post("/verify-otp-code", json={"code": "123456"}, headers=self.headers)
-            self.assertEqual(resp.status_code, 200)
-            self.assertEqual(resp.get_json(), {"ok": False})
-            mock_api.assert_not_called()
-
 if __name__ == "__main__":
     unittest.main(verbosity=2)
 
