@@ -19,6 +19,8 @@ from flask_babel import Babel, gettext as _
 import base64
 import hashlib
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from flask import redirect, url_for
+
 
 app = Flask(__name__)
 
@@ -619,6 +621,17 @@ def user_page():
             app.logger.info("No user_id in session; skipping channels/subscriptions prefetch")
 
     return render_template("UserPage.html", sid=session.sid, channels=my_channels, subscriptions=subscriptions)
+
+@app.route('/signout', methods=['GET'])
+def sign_out():
+    """
+    Clear all user-related session data and return to the landing page.
+    """
+    try:
+        session.clear()
+    except Exception as ex:
+        app.logger.error(f"sign_out: failed to clear session: {ex}", exc_info=True)
+    return redirect(url_for('landing_page'))
 
 if __name__ == '__main__':
     app.run()

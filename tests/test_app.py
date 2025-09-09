@@ -607,6 +607,46 @@ class TestVerifyOtpCode(unittest.TestCase):
             self.assertEqual(resp.get_json(), {"ok": True})
             self.assertTrue(mock_api.called)
 
+class TestSignOut(unittest.TestCase):
+    def setUp(self):
+        app.app.testing = True
+        self.client = app.app.test_client()
+
+    def test_signout_clears_session_and_redirects(self):
+        # Seed some user-related session data
+        with self.client.session_transaction() as sess:
+            sess["email"] = "user@example.com"
+            sess["user_id"] = "U123"
+            sess["current_user"] = "U123"
+            sess["otp_secret"] = "secret"
+
+        # Call signout
+        resp = self.client.get("/signout", follow_redirects=False)
+        # Expect redirect to landing page
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("/", resp.headers.get("Location", ""))
+
+        # After redirect, session should be cleared
+        with self.client.session_transaction() as sess:
+            self.assertIsNone(sess.get("email"))
+            self.assertIsNone(sess.get("user_id"))
+            self.assertIsNone(sess.get("current_user"))
+            self.assertIsNone(sess.get("otp_secret"))
+
+    def test_signout_when_no_session_data(self):
+        # Ensure session starts empty
+        with self.client.session_transaction() as sess:
+            for k in list(sess.keys()):
+                sess.pop(k)
+        # Call signout
+        resp = self.client.get("/signout", follow_redirects=False)
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("/", resp.headers.get("Location", ""))
+
+        # Session remains empty
+        with self.client.session_transaction() as sess:
+            self.assertEqual(dict(sess), {})
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
 

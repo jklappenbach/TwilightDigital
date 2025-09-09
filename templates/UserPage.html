@@ -46,7 +46,7 @@
             padding: 10px 10px 0;
         }
 
-        #sidebarChannels {
+        #sidebarCreators {
             /* Reduced offset so tablist sizing doesn't force scroll */
             margin-top: 10px;
             padding: 0;
@@ -149,6 +149,7 @@
 
         /* Bottom, non-scrollable section */
         .sidebar-bottom {
+            position: relative;
             flex: 0 0 auto;
             border-top: 1px solid var(--frost-border);
             padding: 12px;
@@ -215,6 +216,35 @@
         }
 
         .user-menu-btn:hover {
+            background: var(--btn-bg-hover);
+        }
+
+        /* Popup menu for user actions */
+        .user-menu {
+            position: absolute;
+            left: calc(100% + 12px); /* move off to the right of the sidebar/bottom area */
+            bottom: 72px;            /* float a bit higher above the button */
+            min-width: 180px;
+            background: rgba(20, 22, 28, 0.8); /* twice as opaque for better contrast */
+            border: 1px solid var(--frost-border);
+            border-radius: 10px;
+            box-shadow: 0 14px 28px rgba(0,0,0,0.35);
+            padding: 8px;
+            display: none;
+            z-index: 100; /* ensure it overlays outside the sidebar */
+        }
+       .user-menu[aria-hidden="false"] {
+            display: block;
+        }
+        .user-menu-item {
+            display: block;
+            padding: 10px 12px;
+            border-radius: 8px;
+            color: var(--fg);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .user-menu-item:hover {
             background: var(--btn-bg-hover);
         }
 
@@ -303,7 +333,7 @@
             <span class="label">{{ _('Creators') }}</span>
         </button>
     </div>
-    <div id="sidebarChannels" aria-label="{{ _('Channels') }}">
+    <div id="sidebarCreators" aria-label="{{ _('Channels') }}">
         <div class="sidebar-scroll" id="sidebarScroll" aria-orientation="vertical"><span
                 class="creators-bar">{{ _('Channels') }}</span>
             <ul class="creators-list">
@@ -357,12 +387,15 @@
                  src="{{ user.thumbnail_url if user and user.thumbnail_url else url_for('static', filename='img/user-default.png') }}"
                  alt="{{ _('User thumbnail') }}"/>
             <span class="user-name">{{ user.screen_name if user and user.screen_name else _('User') }}</span>
-            <button class="user-menu-btn" type="button" title="{{ _('Account Settings') }}" aria-label="{{ _('Account Settings') }}">
+            <button class="user-menu-btn" id="userMenuBtn" type="button" title="{{ _('Account Settings') }}" aria-haspopup="menu" aria-expanded="false" aria-controls="userMenu" aria-label="{{ _('Account Settings') }}">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path d="M4 7h16M4 12h16M4 17h16" stroke="white" stroke-opacity="0.9" stroke-width="2"
                           stroke-linecap="round"/>
                 </svg>
             </button>
+        </div>
+        <div class="user-menu" id="userMenu" role="menu" aria-hidden="true">
+            <a class="user-menu-item" role="menuitem" href="{{ url_for('sign_out') }}">{{ _('Sign Out') }}</a>
         </div>
     </div>
 </aside>
@@ -451,6 +484,41 @@
         // Ensure initial activation reflects markup
         const initial = tabs.find(t => t.getAttribute('aria-selected') === 'true') || tabs[0];
         activate(initial);
+    })();
+
+    // User menu popup behavior
+    (function () {
+        const btn = document.getElementById('userMenuBtn');
+        const menu = document.getElementById('userMenu');
+        if (!btn || !menu) return;
+
+        function openMenu() {
+            menu.setAttribute('aria-hidden', 'false');
+            btn.setAttribute('aria-expanded', 'true');
+        }
+        function closeMenu() {
+            menu.setAttribute('aria-hidden', 'true');
+            btn.setAttribute('aria-expanded', 'false');
+        }
+        function toggleMenu() {
+            const isOpen = menu.getAttribute('aria-hidden') === 'false';
+            if (isOpen) closeMenu(); else openMenu();
+        }
+
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleMenu();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!menu.contains(e.target) && e.target !== btn) {
+                closeMenu();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeMenu();
+        });
     })();
 </script>
 </body>
