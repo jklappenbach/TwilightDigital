@@ -132,13 +132,17 @@ def create_app(mdb=None):
                 # Allow mocks that do not implement create_index
                 pass
 
-    # Also index email fields for quick lookup
+    # Also index fields for quick lookup
     try:
         mdb["users"].create_index([("email", ASCENDING)], unique=True)
     except Exception:
         pass
     try:
         mdb["credential_configs"].create_index([("email", ASCENDING)], unique=False)
+    except Exception:
+        pass
+    try:
+        mdb["channel"].create_index([("creator_id", ASCENDING)], unique=False)
     except Exception:
         pass
 
