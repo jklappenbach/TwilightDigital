@@ -152,7 +152,7 @@ class TestTwilightDigitalAPI(unittest.TestCase):
     def test_channels_crud(self):
         self._crud_cycle(
             "channels",
-            {"title": "Primary", "description": "Desc", "admin_id": "12345", "thumbnail_url": None},
+            {"title": "Primary", "description": "Desc", "creator_id": "12345", "thumbnail_url": None},
             {"description": "Updated"},
             id_field="channel_id",
         )
@@ -160,7 +160,7 @@ class TestTwilightDigitalAPI(unittest.TestCase):
     def test_users_crud(self):
         # Create a channel first to reference (all required fields)
         c = self.client.post("/channels", json={"title": "C", "description": "d", "thumbnail_url": None,
-                                                "admin_id": "12345"}).get_json()
+                                                "creator_id": "12345"}).get_json()
         self._crud_cycle(
             "users",
             {"email": "alpha@example.com", "screen_name": "alpha", "role": "Subscriber"},
@@ -196,7 +196,7 @@ class TestTwilightDigitalAPI(unittest.TestCase):
         )
 
     def test_event_feeds_crud(self):
-        ch = self.client.post("/channels", json={"title": "Ch", "description": "d", "admin_id": "1234", "thumbnail_url": None}).get_json()
+        ch = self.client.post("/channels", json={"title": "Ch", "description": "d", "creator_id": "1234", "thumbnail_url": None}).get_json()
         self._crud_cycle(
             "event_feeds",
             {"channel_id": ch["channel_id"], "title": "Feed", "description": "D", "thumbnail_url": None},
@@ -205,7 +205,7 @@ class TestTwilightDigitalAPI(unittest.TestCase):
         )
 
     def test_events_crud(self):
-        ch = self.client.post("/channels", json={"title": "Ch", "description": "d", "admin_id": "1234", "thumbnail_url": None}).get_json()
+        ch = self.client.post("/channels", json={"title": "Ch", "description": "d", "creator_id": "1234", "thumbnail_url": None}).get_json()
         feed = self.client.post(
             "/event_feeds",
             json={"channel_id": ch["channel_id"], "title": "F", "description": "d", "thumbnail_url": None},
@@ -238,7 +238,7 @@ class TestTwilightDigitalAPI(unittest.TestCase):
 
     def test_subscriptions_crud(self):
         # user acts as subscriber; create user and tier, then subscribe
-        ch = self.client.post("/channels", json={"title": "C", "description": "d", "admin_id": "1234", "thumbnail_url": None}).get_json()
+        ch = self.client.post("/channels", json={"title": "C", "description": "d", "creator_id": "1234", "thumbnail_url": None}).get_json()
         user = self.client.post(
             "/users",
             json={"email": "u1@example.com", "screen_name": "u1", "role": "Subscriber"},
@@ -256,7 +256,7 @@ class TestTwilightDigitalAPI(unittest.TestCase):
 
     def test_event_subscriptions_crud(self):
         # dependencies
-        ch = self.client.post("/channels", json={"title": "C", "description": "d", "admin_id": "1234", "thumbnail_url": None}).get_json()
+        ch = self.client.post("/channels", json={"title": "C", "description": "d", "creator_id": "1234", "thumbnail_url": None}).get_json()
         feed = self.client.post(
             "/event_feeds",
             json={"channel_id": ch["channel_id"], "title": "F", "description": "d", "thumbnail_url": None},
@@ -330,7 +330,7 @@ class TestTwilightDigitalAPI(unittest.TestCase):
         # create user
         user = self.client.post(
             "/users",
-            json={"email": "u2@example.com", "screen_name": "u2", "role": "subscriber"},
+            json={"email": "u2@example.com", "screen_name": "u2", "role": "Subscriber"},
         ).get_json()
 
         # create two notes for same user
@@ -359,7 +359,7 @@ class TestTwilightDigitalAPI(unittest.TestCase):
         email = "lookup_user@example.com"
         created = self.client.post(
             "/users",
-            json={"email": email, "screen_name": "lookup_user", "role": "subscriber"},
+            json={"email": email, "screen_name": "lookup_user", "role": "Subscriber"},
         ).get_json()
         self.assertIn("user_id", created)
 
@@ -379,7 +379,7 @@ class TestTwilightDigitalAPI(unittest.TestCase):
         email = "creds_lookup@example.com"
         user = self.client.post(
             "/users",
-            json={"email": email, "screen_name": "creds_user", "role": "subscriber"},
+            json={"email": email, "screen_name": "creds_user", "role": "Subscriber"},
         ).get_json()
 
         c1 = self.client.post(

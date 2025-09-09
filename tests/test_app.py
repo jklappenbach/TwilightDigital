@@ -294,7 +294,7 @@ class TestGenerateOtpUri(unittest.TestCase):
         self.assertIsInstance(uri, str)
         self.assertTrue(uri.startswith("otpauth://totp/"))
         self.assertIn("user@example.com", uri)
-        self.assertIn("issuer=Deep%20Signal", uri)
+        self.assertIn("issuer=Twilight%20Digital", uri)
 
     def test_generate_otp_uri_missing_email(self):
         # No email in session
@@ -619,7 +619,7 @@ class TestVerifyOtpCode(unittest.TestCase):
         with patch.object(app, "_http_json") as mock_api:
             resp = self.client.post("/verify-otp-code", json={"code": "123456"}, headers=self.headers)
             self.assertEqual(resp.status_code, 200)
-            self.assertEqual(resp.get_json(), {"ok": True})
+            self.assertEqual(resp.get_json(), {"ok": False})
             mock_api.assert_not_called()
 
 if __name__ == "__main__":

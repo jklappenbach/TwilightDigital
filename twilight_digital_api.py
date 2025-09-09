@@ -38,12 +38,12 @@ def create_app(mdb=None):
         "channels": {
             "id_field": "channel_id",
             "enums": {},
-            "required": ["title", "description", "thumbnail_url", 'admin_id'],
+            "required": ["title", "description", "thumbnail_url", 'creator_id'],
             "optional": [],
         },
         "users": {
             "id_field": "user_id",
-            "enums": {},
+            "enums": { "role": ROLES},
             "required": ["email", "screen_name", "role"],
             "optional": ["thumbnail_url"],
         },
@@ -456,11 +456,13 @@ def create_app(mdb=None):
         id_field = cfg["id_field"]
         collection = mdb[collection_name]
 
-        @app.route(
-            f"/{collection_name}",
-            methods=["GET", "POST"],
-            endpoint=f"{collection_name}_collection",
-        )
+        # Make registration idempotent: skip if endpoints already exist
+        collection_endpoint = f"{collection_name}_collection"
+        item_endpoint = f"{collection_name}_item"
+        if collection_endpoint in app.view_functions or item_endpoint in app.view_functions:
+            app.logger.debug("Skipping duplicate route registration for %s", collection_name)
+            return
+
         def collection_route():
             if request.method == "POST":
                 payload = request.get_json(silent=True) or {}
@@ -499,11 +501,13 @@ def create_app(mdb=None):
                 return jsonify(error=str(e)), 500
             return jsonify(items), 200
 
-        @app.route(
-            f"/{collection_name}/<string:item_id>",
-            methods=["GET", "PATCH", "DELETE"],
-            endpoint=f"{collection_name}_item",
+        app.add_url_rule(
+            f"/{collection_name}",
+            view_func=collection_route,
+            methods=["GET", "POST"],
+            endpoint=collection_endpoint,
         )
+
         def item_route(item_id: str):
             if request.method == "GET":
                 app.logger.info("GET /%s/%s", collection_name, item_id)
@@ -563,6 +567,13 @@ def create_app(mdb=None):
                 return jsonify(error="Not found"), 404
             return jsonify(deleted_id=item_id), 200
 
+        app.add_url_rule(
+            f"/{collection_name}/<string:item_id>",
+            view_func=item_route,
+            methods=["GET", "PATCH", "DELETE"],
+            endpoint=item_endpoint,
+        )
+
     @app.route("/", methods=["GET"])
     def index():
         # Render the home page using Jinja template
@@ -605,6 +616,48 @@ def create_app(mdb=None):
             return jsonify(error=str(e)), 500
         return jsonify(items), 200
 
+    @app.route("/subscriptions/by_user_id/<path:user_id>", methods=["GET"])
+    def get_subscriptions_by_user_id(user_id: str):
+        app.logger.info("GET /subscriptions/by_user_id/%s", user_id)
+        try:
+            cursor = mdb["subscriptions"].find({"user_id": user_id}, limit=100)
+            items = [_strip_mongo_id(d) for d in cursor]
+        except TypeError as e:
+            # Some fakes may not support 'limit' kwarg
+            app.logger.warning("find(limit=) unsupported; falling back for subscriptions by user_id: %s", str(e))
+            try:
+                items = [_strip_mongo_id(d) for d in mdb["subscriptions"].find({"user_id": user_id})][:100]
+            except Exception as e2:
+                app.logger.error("Database find error on GET /subscriptions/by_user_id/%s: %s", user_id, str(e2),
+                                 exc_info=True)
+                return jsonify(error=str(e2)), 500
+        except Exception as e:
+            app.logger.error("Database find error on GET /subscriptions/by_user_id/%s: %s", user_id, str(e),
+                             exc_info=True)
+            return jsonify(error=str(e)), 500
+        return jsonify(items), 200
+
+    @app.route("/channels/by_creator_id/<path:creator_id>", methods=["GET"])
+    def get_channels_by_creator_id(creator_id: str):
+        app.logger.info("GET /channels/by_creator_id/%s", creator_id)
+        try:
+            cursor = mdb["channels"].find({"creator_id": creator_id}, limit=100)
+            items = [_strip_mongo_id(d) for d in cursor]
+        except TypeError as e:
+            # Some fakes may not support 'limit' kwarg
+            app.logger.warning("find(limit=) unsupported; falling back for subscriptions by creator_id: %s", str(e))
+            try:
+                items = [_strip_mongo_id(d) for d in mdb["channels"].find({"creator_id": creator_id})][:100]
+            except Exception as e2:
+                app.logger.error("Database find error on GET /channels/by_creator_id/%s: %s", creator_id, str(e2),
+                                 exc_info=True)
+                return jsonify(error=str(e2)), 500
+        except Exception as e:
+            app.logger.error("Database find error on GET /channels/by_creator_id/%s: %s", creator_id, str(e),
+                             exc_info=True)
+            return jsonify(error=str(e)), 500
+        return jsonify(items), 200
+
     # Register all entities
     for name in ENTITIES.keys():
         register_crud_routes(name)
@@ -614,7 +667,6 @@ def create_app(mdb=None):
 
 # Default app instance uses real Mongo (or env-configured)
 app = create_app()
-
 
 def _load_runtime_config():
     """
@@ -631,7 +683,6 @@ def _load_runtime_config():
     except Exception:
         app.logger.exception("Failed to load runtime config from %s", cfg_path)
         return {}
-
 
 if __name__ == "__main__":
     cfg = _load_runtime_config()
