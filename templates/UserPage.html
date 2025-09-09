@@ -223,19 +223,21 @@
         .user-menu {
             position: absolute;
             left: calc(100% + 12px); /* move off to the right of the sidebar/bottom area */
-            bottom: 72px;            /* float a bit higher above the button */
+            bottom: 72px; /* float a bit higher above the button */
             min-width: 180px;
             background: rgba(20, 22, 28, 0.8); /* twice as opaque for better contrast */
             border: 1px solid var(--frost-border);
             border-radius: 10px;
-            box-shadow: 0 14px 28px rgba(0,0,0,0.35);
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
             padding: 8px;
             display: none;
             z-index: 100; /* ensure it overlays outside the sidebar */
         }
-       .user-menu[aria-hidden="false"] {
+
+        .user-menu[aria-hidden="false"] {
             display: block;
         }
+
         .user-menu-item {
             display: block;
             padding: 10px 12px;
@@ -244,6 +246,7 @@
             text-decoration: none;
             font-weight: 600;
         }
+
         .user-menu-item:hover {
             background: var(--btn-bg-hover);
         }
@@ -326,8 +329,12 @@
                 aria-selected="false">
         <span class="icon" aria-hidden="true">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z" stroke="white" stroke-opacity="0.9" stroke-width="2"
-                  stroke-linejoin="round"/>
+            <circle cx="8" cy="7.5" r="3.5" stroke="white" stroke-opacity="0.9" stroke-width="2"/>
+            <path d="M2.5 19.5c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="white" stroke-opacity="0.9" stroke-width="2"
+                  stroke-linecap="round"/>
+            <circle cx="17" cy="8.5" r="2.5" stroke="white" stroke-opacity="0.9" stroke-width="2"/>
+            <path d="M21.5 19.5c0-2.5-2-4.5-4.5-4.5" stroke="white" stroke-opacity="0.9" stroke-width="2"
+                  stroke-linecap="round"/>
           </svg>
         </span>
             <span class="label">{{ _('Creators') }}</span>
@@ -357,21 +364,21 @@
         </div>
     </div>
     {% if my_channels and my_channels|length > 0 %}
-    <div id="sidebarMyChannels" aria-label="{{ _('My Channels') }}">
-        <div class="sidebar-scroll" aria-orientation="vertical">
-            <span class="creators-bar">{{ _('My Channels') }}</span>
-            <ul class="creators-list">
-                {% for ch in my_channels %}
-                    <li class="creator-item">
-                        <img class="creator-thumb"
-                             src="{{ ch.thumbnail_url if ch.thumbnail_url else url_for('static', filename='img/channel-default.png') }}"
-                             alt="{{ ch.title }} {{ _('thumbnail') }}">
-                        <span class="creator-title">{{ ch.title }}</span>
-                    </li>
-                {% endfor %}
-            </ul>
+        <div id="sidebarMyChannels" aria-label="{{ _('My Channels') }}">
+            <div class="sidebar-scroll" aria-orientation="vertical">
+                <span class="creators-bar">{{ _('My Channels') }}</span>
+                <ul class="creators-list">
+                    {% for ch in my_channels %}
+                        <li class="creator-item">
+                            <img class="creator-thumb"
+                                 src="{{ ch.thumbnail_url if ch.thumbnail_url else url_for('static', filename='img/channel-default.png') }}"
+                                 alt="{{ ch.title }} {{ _('thumbnail') }}">
+                            <span class="creator-title">{{ ch.title }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
         </div>
-    </div>
     {% endif %}
     <div class="sidebar-bottom">
         <button class="create-creator" type="button" aria-label="{{ _('Become a creator') }}">
@@ -387,7 +394,9 @@
                  src="{{ user.thumbnail_url if user and user.thumbnail_url else url_for('static', filename='img/user-default.png') }}"
                  alt="{{ _('User thumbnail') }}"/>
             <span class="user-name">{{ user.screen_name if user and user.screen_name else _('User') }}</span>
-            <button class="user-menu-btn" id="userMenuBtn" type="button" title="{{ _('Account Settings') }}" aria-haspopup="menu" aria-expanded="false" aria-controls="userMenu" aria-label="{{ _('Account Settings') }}">
+            <button class="user-menu-btn" id="userMenuBtn" type="button" title="{{ _('Account Settings') }}"
+                    aria-haspopup="menu" aria-expanded="false" aria-controls="userMenu"
+                    aria-label="{{ _('Account Settings') }}">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path d="M4 7h16M4 12h16M4 17h16" stroke="white" stroke-opacity="0.9" stroke-width="2"
                           stroke-linecap="round"/>
@@ -496,10 +505,12 @@
             menu.setAttribute('aria-hidden', 'false');
             btn.setAttribute('aria-expanded', 'true');
         }
+
         function closeMenu() {
             menu.setAttribute('aria-hidden', 'true');
             btn.setAttribute('aria-expanded', 'false');
         }
+
         function toggleMenu() {
             const isOpen = menu.getAttribute('aria-hidden') === 'false';
             if (isOpen) closeMenu(); else openMenu();
