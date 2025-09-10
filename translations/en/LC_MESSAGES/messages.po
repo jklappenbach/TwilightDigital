@@ -71,6 +71,9 @@ msgstr "Home"
 msgid "Creators"
 msgstr "Creators"
 
+msgid "Account Settings"
+msgstr "Account Settings"
+
 msgid "Pricing"
 msgstr "Pricing"
 
@@ -361,3 +364,21 @@ msgstr "Welcome back! Here’s what’s new."
 
 msgid "Browse and purchase premium content."
 msgstr "Browse and purchase premium content."
+
+msgid "Account"
+msgstr "Account"
+
+msgid "Channels"
+msgstr "Channels"
+
+msgid "My Channels"
+msgstr "My Channels"
+
+msgid "No channels yet"
+msgstr "No channels yet"
+
+msgid "Manage and discover creators."
+msgstr "Manage and discover creators."
+
+msgid "Manage your account"
+msgstr "Manage your account"

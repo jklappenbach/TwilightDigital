@@ -4,6 +4,24 @@ msgstr ""
 "Language: ja\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
+msgid "Account"
+msgstr "アカウント"
+
+msgid "Channels"
+msgstr "チャンネル"
+
+msgid "My Channels"
+msgstr "マイチャンネル"
+
+msgid "No channels yet"
+msgstr "まだチャンネルはありません"
+
+msgid "Manage and discover creators."
+msgstr "クリエイターを管理し、発見しましょう。"
+
+msgid "Manage your account"
+msgstr "アカウントを管理する"
+
 msgid "Twilight Digital"
 msgstr "Twilight Digital"
 

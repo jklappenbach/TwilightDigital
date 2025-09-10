@@ -4,6 +4,21 @@ msgstr ""
 "Language: fr\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
+msgid "Your Feed"
+msgstr "Votre flux"
+
+msgid "Welcome back! Here’s what’s new."
+msgstr "Bon retour ! Voici les nouveautés."
+
+msgid "Browse and purchase premium content."
+msgstr "Parcourez et achetez du contenu premium."
+
+msgid "Creators"
+msgstr "Créateurs"
+
+msgid "Account Settings"
+msgstr "Paramètres du compte"
+
 msgid "Twilight Digital"
 msgstr "Twilight Digital"
 
@@ -360,3 +375,21 @@ msgstr "Bon retour ! Voici les nouveautés."
 
 msgid "Browse and purchase premium content."
 msgstr "Parcourez et achetez du contenu premium."
+
+msgid "Account"
+msgstr "Compte"
+
+msgid "Channels"
+msgstr "Chaînes"
+
+msgid "My Channels"
+msgstr "Mes chaînes"
+
+msgid "No channels yet"
+msgstr "Aucune chaîne pour le moment"
+
+msgid "Manage and discover creators."
+msgstr "Gérez et découvrez des créateurs."
+
+msgid "Manage your account"
+msgstr "Gérez votre compte"
