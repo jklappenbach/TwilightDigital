@@ -304,7 +304,8 @@ def verify_email_code():
             user_payload = {
                 "email": email,
                 "screen_name": screen_name,
-                "role": "subscriber",
+                "role": "Subscriber",
+                "content_maturity": "G"
             }
             status, user_resp = _http_json("POST", f"{base_url}/users", user_payload)
             if status == 201 and isinstance(user_resp, dict):

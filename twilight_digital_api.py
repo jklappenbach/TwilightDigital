@@ -32,19 +32,22 @@ def create_app(mdb=None):
     CONTACT_TYPES = ["Phone", "Email_Address", "Push_Notification"]
     CREDENTIAL_TYPES = ["OAuth", "Authenticator_2FA", "Email_2FA", "SMS_2FA"]
     ROLES = ["Creator", "Subscriber", "Admin", "Support"]
+    PUBLISHING_TYPES = ["Auto_Fanout", "Lazy_Loading"]
+    CONTENT_MATURITY_TYPES = ["G", "PG13", "NC17"]
+    ACTION_TYPES = ["Created", "Updated", "Deleted"]
 
     # Entity registry describing endpoint names, id fields, and validations
     ENTITIES = {
         "channels": {
             "id_field": "channel_id",
-            "enums": {},
-            "required": ["title", "description", "thumbnail_url", 'creator_id'],
+            "enums": { "publishing_type": PUBLISHING_TYPES, "content_maturity": CONTENT_MATURITY_TYPES },
+            "required": ["title", "description", "thumbnail_url", "creator_id", "publishing_type", "content_maturity"],
             "optional": [],
         },
         "users": {
             "id_field": "user_id",
-            "enums": { "role": ROLES},
-            "required": ["email", "screen_name", "role"],
+            "enums": { "role": ROLES, "content_maturity": CONTENT_MATURITY_TYPES  },
+            "required": ["email", "screen_name", "role", "content_maturity"],
             "optional": ["thumbnail_url"],
         },
         "user_notes": {
@@ -69,17 +72,19 @@ def create_app(mdb=None):
             "required": ["user_id", "email", "credential_type", "encrypted_credential"],
             "optional": [],
         },
-        "event_feeds": {
-            "id_field": "event_feed_id",
-            "enums": {},
-            "required": ["channel_id", "title", "description", "thumbnail_url"],
-            "optional": [],
-        },
         "events": {
             "id_field": "event_id",
-            "enums": {},
-            "required": ["event_feed_id", "tier_ordinal", "title", "body", "thumbnail_url", "content_url"],
+            "enums": { "content_maturity": CONTENT_MATURITY_TYPES },
+            "required": ["channel_id", "date_time", "tier_ordinal", "title", "body", "thumbnail_url", "content_url", "content_maturity"],
             "optional": [],
+        },
+        # event_user is the feed for each user, where event IDs will be stored as records.
+        # These records track whether they've been viewed, and can be deleted.
+        "event_user": {
+            "id_field": "event_user_id",
+            "enums": {},
+            "required": ["event_id", "user_id"],
+            "optional": ["viewed"],
         },
         "subscription_tiers": {
             "id_field": "subscription_tier_id",
@@ -93,18 +98,17 @@ def create_app(mdb=None):
             "required": ["user_id", "channel_id", "subscription_tier_id"],
             "optional": [],
         },
-        "event_subscriptions": {
-            "id_field": "event_subscription_id",
-            "enums": {},
-            "required": ["subscription_id", "event_feed_id", "notification_type"],
-            "optional": [],
-        },
         "stripe_payment_agreements": {
             "id_field": "stripe_payment_agreement_id",
             "enums": {},
             "required": ["user_id", "stripe_subscription_id", "stripe_customer_id", "stripe_product_id"],
             "optional": [],
         },
+        "audit_logs": {
+            "id_field": "audit_log_id",
+            "enums": { "action_type": ACTION_TYPES },
+            "required": ["collection", "record_id", "action_type", "user_id", "datetime"],
+        }
     }
 
     def _entity_config(collection_name):
@@ -142,7 +146,19 @@ def create_app(mdb=None):
     except Exception:
         pass
     try:
-        mdb["channel"].create_index([("creator_id", ASCENDING)], unique=False)
+        mdb["channels"].create_index([("creator_id", ASCENDING)], unique=False)
+    except Exception:
+        pass
+    try:
+        mdb["events"].create_index([("channel_id", ASCENDING)], unique=False)
+    except Exception:
+        pass
+    try:
+        mdb["event_user"].create_index([("user_id", ASCENDING)], unique=False)
+    except Exception:
+        pass
+    try:
+        mdb["audit_log"].create_index([("user_id", ASCENDING)], unique=False)
     except Exception:
         pass
 
