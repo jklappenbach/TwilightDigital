@@ -1,42 +1,15 @@
 #!/usr/bin/env python3
-import json
 import time
-import urllib.request
-import urllib.error
 from threading import Thread
+from app import _http_json
 
 from twilight_digital_api import create_app
-
-
-def _http_json(method, url, payload=None, timeout=5):
-    data = None
-    headers = {"Content-Type": "application/json"}
-    if payload is not None:
-        data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(url, data=data, headers=headers, method=method)
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            body = resp.read().decode("utf-8")
-            ct = resp.headers.get("Content-Type", "")
-            if "application/json" in ct:
-                return resp.getcode(), json.loads(body)
-            return resp.getcode(), body
-    except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8")
-        try:
-            parsed = json.loads(body)
-        except Exception:
-            parsed = body
-        return e.code, parsed
-    except urllib.error.URLError as e:
-        raise RuntimeError(f"Failed to reach {url}: {e}") from e
-
 
 def _wait_for_server(base_url, timeout=15):
     start = time.time()
     while time.time() - start < timeout:
         try:
-            code, _ = _http_json("GET", f"{base_url}/", None, timeout=2)
+            code, _ = _http_json("GET", f"{base_url}/", None,None, timeout=2)
             if code == 200:
                 return True
         except Exception:
@@ -61,23 +34,14 @@ def main():
     if not _wait_for_server(base_url):
         raise SystemExit("Server did not become ready in time")
 
-    # 1) Create a channel (required by the API for creating users)
-    channel_payload = {"title": "Publisher Channel", "description": "Primary content channel", "thumbnail_url": None}
-    code, channel_resp = _http_json("POST", f"{base_url}/channels", channel_payload)
-    if code != 201:
-        raise SystemExit(f"Failed to create channel: HTTP {code} {channel_resp}")
-    channel_id = channel_resp.get("channel_id")
-    print(f"Created channel: {channel_resp}")
-
     # 2) Create a user with the 'Publisher' role and a catchy screen name
     # Note: credential_config_id can be None as per API contract.
     user_payload = {
-        "channel_id": channel_id,
         "screen_name": "NovaPulse",  # catchy screen name
         "credential_config_id": None,
         "role": "Publisher",
     }
-    code, user_resp = _http_json("POST", f"{base_url}/users", user_payload)
+    code, user_resp = _http_json("POST", f"{base_url}/users", "integration_test", user_payload)
     if code != 201:
         raise SystemExit(f"Failed to create user: HTTP {code} {user_resp}")
     print(f"Created user: {user_resp}")

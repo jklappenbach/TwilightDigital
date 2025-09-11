@@ -158,7 +158,7 @@ def create_app(mdb=None):
     except Exception:
         pass
     try:
-        mdb["audit_log"].create_index([("user_id", ASCENDING)], unique=False)
+        mdb["audit_log"].create_index([("user_id", ASCENDING), ("date_time", ASCENDING)], unique=False)
     except Exception:
         pass
 

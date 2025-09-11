@@ -9,7 +9,6 @@ import pyotp
 import qrcode
 from email.message import EmailMessage
 from io import BytesIO
-from integration.http_json_server_bootstrap import _http_json
 from flask.sessions import SessionInterface, SessionMixin
 import threading
 import secrets
@@ -20,6 +19,8 @@ import base64
 import hashlib
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from flask import redirect, url_for
+import urllib.request
+import urllib.error
 
 
 app = Flask(__name__)
@@ -29,6 +30,33 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-change-me")
 # TODO Wire this up to secrets manager in the cloud prior to production release (e.g., AWS Secrets Manager)
 enc_secret_key = os.environ.get("APP_ENCRYPTION_KEY") or app.secret_key or "twilight-digital"
 base_url = os.environ.get('TWILIGHT_DIGITAL_API_BASE_URL', '').rstrip('/')
+
+def _http_json(method, url, user_id=None, payload=None, timeout=5, headers=None):
+    data = None
+    base_headers = {"Content-Type": "application/json"}
+    if user_id is not None:
+        base_headers["X-User-Id"] = user_id
+    if headers and isinstance(headers, dict):
+        base_headers.update(headers)
+    if payload is not None:
+        data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers=base_headers, method=method)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            body = resp.read().decode("utf-8")
+            ct = resp.headers.get("Content-Type", "")
+            if "application/json" in ct:
+                return resp.getcode(), json.loads(body)
+            return resp.getcode(), body
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8")
+        try:
+            parsed = json.loads(body)
+        except Exception:
+            parsed = body
+        return e.code, parsed
+    except urllib.error.URLError as e:
+        raise RuntimeError(f"Failed to reach {url}: {e}") from e
 
 # In-memory server-side session with 1-hour TTL
 class _TTLCache:
@@ -307,7 +335,7 @@ def verify_email_code():
                 "role": "Subscriber",
                 "content_maturity": "G"
             }
-            status, user_resp = _http_json("POST", f"{base_url}/users", user_payload)
+            status, user_resp = _http_json("POST", f"{base_url}/users", email, user_payload)
             if status == 201 and isinstance(user_resp, dict):
                 created_user_id = user_resp.get("user_id")
                 session['user_id'] = created_user_id
@@ -318,7 +346,7 @@ def verify_email_code():
                         "contact_type": "Email_Address",
                         "data": email,
                     }
-                    _http_json("POST", f"{base_url}/contacts", contact_payload)
+                    _http_json("POST", f"{base_url}/contacts", created_user_id, contact_payload)
             else:
                 app.logger.error(f"Failed to create user via Twilight Digital API: HTTP {status} {user_resp}")
         except Exception as ex:
@@ -574,7 +602,7 @@ def verify_otp_code():
                     "credential_type": "Authenticator_2FA",
                     "encrypted_credential": encrypted_credential,
                 }
-                status, resp = _http_json("POST", f"{base_url}/credential_configs", payload)
+                status, resp = _http_json("POST", f"{base_url}/credential_configs", user_id, payload)
                 if status not in (200, 201):
                     app.logger.error(f"verify_otp_code: credential_configs create failed: HTTP {status} {resp}")
             except Exception as ex:

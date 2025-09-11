@@ -572,8 +572,11 @@ class TestVerifyOtpCode(unittest.TestCase):
             args = mock_api.call_args[0]
             self.assertEqual(args[0], "POST")
             self.assertTrue(args[1].endswith("/credential_configs"))
-            payload = mock_api.call_args[1].get("payload") or mock_api.call_args[0][2]
-            self.assertEqual(payload["user_id"], "U123")
+            payload = mock_api.call_args[0][3]
+            # Ensure payload is a dict with expected fields
+            self.assertIsInstance(payload, dict)
+            # Optional: enforce user_id is included in the payload (if part of API contract)
+            self.assertEqual(payload.get("user_id"), "U123")
             self.assertEqual(payload["credential_type"], "Authenticator_2FA")
             self.assertIsInstance(payload["encrypted_credential"], str)
             self.assertGreater(len(payload["encrypted_credential"]), 0)
