@@ -643,6 +643,15 @@ def user_page():
                 app.logger.error(f"Failed to load subscriptions for user_id={user_id}: HTTP {status} {resp}")
         except Exception as ex:
             app.logger.exception(f"Error loading subscriptions for user_id={user_id}: {ex}")
+
+        try:
+            status, resp = _http_json("GET", f"{base_url}/feeds/by_user_id/{user_id}")
+            if status == 200 and isinstance(resp, list):
+                feeds = resp
+            else:
+                app.logger.error(f"Failed to load feeds for user_id={user_id}: HTTP {status} {resp}")
+        except Exception as ex:
+            app.logger.exception(f"Error loading feeds for user_id={user_id}: {ex}")
     else:
         if not base_url:
             app.logger.warning("TWILIGHT_DIGITAL_API_BASE_URL not configured; skipping data prefetch for UserPage")

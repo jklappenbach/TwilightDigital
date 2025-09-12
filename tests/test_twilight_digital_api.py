@@ -1,6 +1,7 @@
 import unittest
 from copy import deepcopy
 from twilight_digital_api import create_app
+from datetime import datetime, timezone, timedelta
 
 # Simple in-memory mock of a Mongo-like API
 class _InsertOneResult:
@@ -54,9 +55,14 @@ class FakeCollection:
         for d in self._docs_by_id.values():
             ok = True
             for k, v in filter_dict.items():
-                if d.get(k) != v:
-                    ok = False
-                    break
+                if isinstance(v, dict) and '$gte' in v and '$lte' in v:
+                    if d.get(k) < v['$gte'] or d.get(k) > v['$lte']:
+                        ok = False
+                        break
+                else:
+                    if d.get(k) != v:
+                        ok = False
+                        break
             if ok:
                 results.append(deepcopy(d))
         if limit is not None:
@@ -364,6 +370,85 @@ class TestTwilightDigitalAPI(unittest.TestCase):
         resp = self.client.get("/credential_configs/by_email/none@example.com")
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.get_json(), [])
+
+class AuditLogsRouteTests(unittest.TestCase):
+    def setUp(self):
+        self.mdb = FakeMongoDB()
+        self.app = create_app(self.mdb)
+        self.client = self.app.test_client()
+
+        # Seed audit_logs
+        coll = self.mdb["audit_logs"]
+        base = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        # In-range for user A
+        coll.insert_one({
+            "_id": "1",
+            "audit_log_id": "1",
+            "user_id": "userA",
+            "action_type": "Created",
+            "collection": "users",
+            "record_id": "ra",
+            "datetime": base + timedelta(days=1),
+        })
+        coll.insert_one({
+            "_id": "2",
+            "audit_log_id": "2",
+            "user_id": "userA",
+            "action_type": "Updated",
+            "collection": "users",
+            "record_id": "rb",
+            "datetime": base + timedelta(days=2),
+        })
+        # Out-of-range for user A
+        coll.insert_one({
+            "_id": "3",
+            "audit_log_id": "3",
+            "user_id": "userA",
+            "action_type": "Deleted",
+            "collection": "users",
+            "record_id": "rc",
+            "datetime": base + timedelta(days=10),
+        })
+        # Different user
+        coll.insert_one({
+            "_id": "4",
+            "audit_log_id": "4",
+            "user_id": "userB",
+            "action_type": "Created",
+            "collection": "users",
+            "record_id": "rd",
+            "datetime": base + timedelta(days=1),
+        })
+
+    def test_get_audit_logs_by_user_id_valid_range(self):
+        start = "2024-01-01T00:00:00Z"
+        end = "2024-01-05T00:00:00Z"
+        resp = self.client.get(f"/audit_logs/by_user_id/userA?start_date={start}&end_date={end}")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        # Expect only the two in-range docs for userA
+        self.assertEqual(len(data), 2)
+        returned_ids = {d["audit_log_id"] for d in data}
+        self.assertSetEqual(returned_ids, {"1", "2"})
+
+    def test_get_audit_logs_by_user_id_missing_params(self):
+        resp = self.client.get("/audit_logs/by_user_id/userA?start_date=2024-01-01T00:00:00Z")
+        self.assertEqual(resp.status_code, 400)
+        data = resp.get_json()
+        self.assertIn("start_date and end_date are required", data["error"])
+
+    def test_get_audit_logs_by_user_id_invalid_date_format(self):
+        resp = self.client.get("/audit_logs/by_user_id/userA?start_date=not-a-date&end_date=2024-01-05")
+        self.assertEqual(resp.status_code, 400)
+        data = resp.get_json()
+        self.assertIn("Invalid datetime format", data["error"])
+
+    def test_get_audit_logs_by_user_id_end_before_start(self):
+        resp = self.client.get("/audit_logs/by_user_id/userA?start_date=2024-01-05T00:00:00Z&end_date=2024-01-01T00:00:00Z")
+        self.assertEqual(resp.status_code, 400)
+        data = resp.get_json()
+        self.assertIn("end_date must be greater", data["error"])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

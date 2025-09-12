@@ -78,12 +78,13 @@ def create_app(mdb=None):
             "required": ["channel_id", "date_time", "tier_ordinal", "title", "body", "thumbnail_url", "content_url", "content_maturity"],
             "optional": [],
         },
-        # event_user is the feed for each user, where event IDs will be stored as records.
+        # the feed for each user, where event IDs will be stored as records.
         # These records track whether they've been viewed, and can be deleted.
-        "event_user": {
-            "id_field": "event_user_id",
+        # We've set this up this way so that a user could have multiple feeds.
+        "feed": {
+            "id_field": "field_id",
             "enums": {},
-            "required": ["event_id", "user_id"],
+            "required": ["event_id", "user_id", "date_time"],
             "optional": ["viewed"],
         },
         "subscription_tiers": {
@@ -154,7 +155,7 @@ def create_app(mdb=None):
     except Exception:
         pass
     try:
-        mdb["event_user"].create_index([("user_id", ASCENDING)], unique=False)
+        mdb["feeds"].create_index([("user_id", ASCENDING)], unique=False)
     except Exception:
         pass
     try:
@@ -234,6 +235,32 @@ def create_app(mdb=None):
         cleaned = dict(doc)
         cleaned.pop("_id", None)
         return cleaned
+
+    def _now_utc():
+        return datetime.now(timezone.utc)
+
+    def _write_audit_log(action_type: str, collection_name: str, record_id: str):
+        # Avoid recursive/self logging
+        if collection_name == "audit_logs":
+            return
+        try:
+            user_id = request.headers.get("X-User-Id") or "anonymous"
+        except Exception:
+            user_id = "anonymous"
+        try:
+            log_doc = {
+                "audit_log_id": _generate_id(),
+                "collection": collection_name,
+                "record_id": record_id,
+                "action_type": action_type,
+                "user_id": user_id,
+                "datetime": _now_utc(),
+            }
+            log_doc["_id"] = log_doc["audit_log_id"]
+            mdb["audit_logs"].insert_one(log_doc)
+        except Exception as e:
+            # Never fail the main request due to audit logging; just record the error.
+            app.logger.error("Failed to write audit log: %s", str(e), exc_info=True)
 
     # ---- OpenAPI generation ----
     def _entity_to_schema(entity_name: str, cfg: dict, for_update: bool = False) -> dict:
@@ -499,6 +526,12 @@ def create_app(mdb=None):
                 except Exception as e:
                     app.logger.error("Database insert error on POST /%s: %s", collection_name, str(e), exc_info=True)
                     return jsonify(error=str(e)), 400
+                # Audit log
+                try:
+                    _write_audit_log("Created", collection_name, doc[id_field])
+                except Exception:
+                    pass
+
                 return jsonify(_strip_mongo_id(doc)), 201
 
             # GET list (no filters for simplicity; limit to 100)
@@ -571,6 +604,12 @@ def create_app(mdb=None):
                     app.logger.error("Database read-back error after PATCH /%s/%s: %s", collection_name, item_id,
                                      str(e), exc_info=True)
                     return jsonify(error=str(e)), 500
+                # Audit log
+                try:
+                    _write_audit_log("Updated", collection_name, item_id)
+                except Exception:
+                    pass
+
                 return jsonify(_strip_mongo_id(current)), 200
 
             # DELETE
@@ -585,6 +624,11 @@ def create_app(mdb=None):
             if deleted == 0:
                 app.logger.error("Not found on DELETE /%s/%s", collection_name, item_id)
                 return jsonify(error="Not found"), 404
+            # Audit log
+            try:
+                _write_audit_log("Deleted", collection_name, item_id)
+            except Exception:
+                pass
             return jsonify(deleted_id=item_id), 200
 
         app.add_url_rule(
@@ -677,6 +721,94 @@ def create_app(mdb=None):
                              exc_info=True)
             return jsonify(error=str(e)), 500
         return jsonify(items), 200
+
+    @app.route("/feeds/by_user_id/<path:user_id>", methods=["GET"])
+    def get_feeds_by_user_id(user_id: str):
+        app.logger.info("GET /feeds/by_user_id/%s", user_id)
+        try:
+            cursor = mdb["feeds"].find({"user_id": user_id}, limit=100)
+            items = [_strip_mongo_id(d) for d in cursor]
+        except TypeError as e:
+            # Some fakes may not support 'limit' kwarg
+            app.logger.warning("find(limit=) unsupported; falling back for feeds by user_id: %s", str(e))
+            try:
+                items = [_strip_mongo_id(d) for d in mdb["feeds"].find({"user_id": user_id})][:100]
+            except Exception as e2:
+                app.logger.error("Database find error on GET /feeds/by_user_id/%s: %s", user_id, str(e2), exc_info=True)
+                return jsonify(error=str(e2)), 500
+        except Exception as e:
+            app.logger.error("Database find error on GET /feeds/by_user_id/%s: %s", user_id, str(e), exc_info=True)
+            return jsonify(error=str(e)), 500
+        return jsonify(items), 200
+
+    @app.route("/audit_logs/by_user_id/<path:user_id>", methods=["GET"])
+    def get_audit_logs_by_user_id(user_id: str):
+        """
+        Returns audit logs for a user_id between start_date and end_date (inclusive).
+        Query params:
+          - start_date: ISO-8601 datetime (e.g., 2024-01-01T00:00:00Z)
+          - end_date: ISO-8601 datetime
+        """
+        start_date = request.args.get("start_date")
+        end_date = request.args.get("end_date")
+        if not start_date or not end_date:
+            return jsonify(error="start_date and end_date are required query parameters"), 400
+
+        def _parse_iso8601(s: str):
+            try:
+                # Support trailing 'Z' and timezone-naive strings; normalize to UTC
+                if s.endswith("Z"):
+                    dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+                else:
+                    dt = datetime.fromisoformat(s)
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                else:
+                    dt = dt.astimezone(timezone.utc)
+                return dt
+            except Exception:
+                return None
+
+        start_dt = _parse_iso8601(start_date)
+        end_dt = _parse_iso8601(end_date)
+        if start_dt is None or end_dt is None:
+            return jsonify(error="Invalid datetime format. Use ISO-8601, e.g., 2024-01-01T00:00:00Z"), 400
+        if end_dt < start_dt:
+            return jsonify(error="end_date must be greater than or equal to start_date"), 400
+
+        # Support both 'datetime' and 'date_time' field names for compatibility
+        date_fields = ["datetime", "date_time"]
+
+        query = {
+            "user_id": user_id,
+            # We'll try each date field; Mongo doesn't allow OR on different fields easily without $or,
+            # so we'll attempt primary field and fall back in code if needed.
+        }
+
+        coll = mdb["audit_logs"]
+
+        def _find_with_date_field(field_name: str):
+            q = dict(query)
+            q[field_name] = {"$gte": start_dt, "$lte": end_dt}
+            try:
+                cursor = coll.find(q, limit=100)
+                return [_strip_mongo_id(d) for d in cursor]
+            except TypeError:
+                # Fallback if find doesn't support limit kwarg
+                items = [_strip_mongo_id(d) for d in coll.find(q)][:100]
+                return items
+
+        try:
+            items = _find_with_date_field(date_fields[0])
+            if not items:
+                # Try alternate field if nothing found
+                items = _find_with_date_field(date_fields[1])
+        except Exception as e:
+            app.logger.error("Database error on GET /audit_logs/by_user_id/%s: %s", user_id, str(e), exc_info=True)
+            return jsonify(error=str(e)), 500
+
+        return jsonify(items), 200
+
 
     # Register all entities
     for name in ENTITIES.keys():
