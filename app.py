@@ -622,6 +622,7 @@ def user_page():
     # Prepare containers
     my_channels = []
     subscriptions = []
+    feed = []
 
     # Load channels created by this user (creator_id = user_id)
     if base_url and user_id:
@@ -643,11 +644,10 @@ def user_page():
                 app.logger.error(f"Failed to load subscriptions for user_id={user_id}: HTTP {status} {resp}")
         except Exception as ex:
             app.logger.exception(f"Error loading subscriptions for user_id={user_id}: {ex}")
-
         try:
             status, resp = _http_json("GET", f"{base_url}/feeds/by_user_id/{user_id}")
             if status == 200 and isinstance(resp, list):
-                feeds = resp
+                feed = resp
             else:
                 app.logger.error(f"Failed to load feeds for user_id={user_id}: HTTP {status} {resp}")
         except Exception as ex:
@@ -658,7 +658,7 @@ def user_page():
         if not user_id:
             app.logger.info("No user_id in session; skipping channels/subscriptions prefetch")
 
-    return render_template("UserPage.html", sid=session.sid, channels=my_channels, subscriptions=subscriptions)
+    return render_template("UserPage.html", sid=session.sid, feed=feed, my_channels=my_channels, subscriptions=subscriptions)
 
 @app.route('/signout', methods=['GET'])
 def sign_out():
