@@ -21,6 +21,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from flask import redirect, url_for
 import urllib.request
 import urllib.error
+import json
 
 
 app = Flask(__name__)
@@ -590,7 +591,7 @@ def verify_otp_code():
         session["current_user"] = user_id
 
         # Encrypt otp_uri for storage
-        enc_secret = os.environ.get("APP_ENCRYPTION_KEY") or app.secret_key or "deep-signal"
+        enc_secret = os.environ.get("APP_ENCRYPTION_KEY") or app.secret_key or "twilight-digital"
         encrypted_credential = _aes256_encrypt_to_b64(otp_secret, enc_secret)
 
         # Persist credential config via Twilight Digital API if we don't have it

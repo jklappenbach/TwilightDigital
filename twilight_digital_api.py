@@ -5,6 +5,7 @@ from pymongo import MongoClient, ASCENDING
 from datetime import datetime, timezone
 import logging
 from pathlib import Path
+from pymongo import ASCENDING, DESCENDING
 
 
 def create_app(mdb=None):
@@ -75,7 +76,8 @@ def create_app(mdb=None):
         "events": {
             "id_field": "event_id",
             "enums": { "content_maturity": CONTENT_MATURITY_TYPES },
-            "required": ["channel_id", "date_time", "tier_ordinal", "title", "body", "thumbnail_url", "content_url", "content_maturity"],
+            "required": ["channel_id", "date_time", "tier_ordinal", "title", "body", "thumbnail_url", "content_url",
+                         "content_maturity"],
             "optional": [],
         },
         # the feed for each user, where event IDs will be stored as records.
@@ -84,7 +86,8 @@ def create_app(mdb=None):
         "feed": {
             "id_field": "field_id",
             "enums": {},
-            "required": ["event_id", "user_id", "date_time"],
+            "required": ["event_id", "user_id", "date_time", "title", "body", "thumbnail_url", "content_url",
+                         "content_maturity", "channel_title", "channel_id"],
             "optional": ["viewed"],
         },
         "subscription_tiers": {
@@ -724,22 +727,59 @@ def create_app(mdb=None):
 
     @app.route("/feeds/by_user_id/<path:user_id>", methods=["GET"])
     def get_feeds_by_user_id(user_id: str):
-        app.logger.info("GET /feeds/by_user_id/%s", user_id)
+        # Query params with defaults
         try:
-            cursor = mdb["feeds"].find({"user_id": user_id}, limit=100)
+            page = int(request.args.get("page", "1"))
+            page_size = int(request.args.get("page_size", "20"))
+        except ValueError:
+            return jsonify(error="page and page_size must be integers"), 400
+
+        # Bound page_size to a sane maximum
+        page = max(page, 1)
+        page_size = max(1, min(page_size, 200))
+
+        # Allowlist sorting fields and direction
+        sort_by = (request.args.get("sort_by") or "date_time").strip()
+        sort_dir = (request.args.get("sort_dir") or "desc").strip().lower()
+
+        allowed_sort_fields = {"date_time", "event_id"}
+        if sort_by not in allowed_sort_fields:
+            return jsonify(error=f"Invalid sort_by. Allowed: {', '.join(sorted(allowed_sort_fields))}"), 400
+
+        direction = DESCENDING if sort_dir == "desc" else ASCENDING
+
+        query = {"user_id": user_id}
+
+        # Optional projection to trim payload if needed
+        projection = None
+        # projection = {"_id": 0, "event_id": 1, "user_id": 1, "date_time": 1, "title": 1, "description": 1, "thumbnail_url": 1, "content_url": 1}
+
+        try:
+            # Total count (for pagination UI)
+            total = mdb["feeds"].count_documents(query)
+            skip = (page - 1) * page_size
+
+            cursor = (
+                mdb["feeds"]
+                .find(query, projection=projection)
+                .sort([(sort_by, direction), ("_id", direction)])  # tie-breaker by _id
+                .skip(skip)
+                .limit(page_size)
+            )
             items = [_strip_mongo_id(d) for d in cursor]
-        except TypeError as e:
-            # Some fakes may not support 'limit' kwarg
-            app.logger.warning("find(limit=) unsupported; falling back for feeds by user_id: %s", str(e))
-            try:
-                items = [_strip_mongo_id(d) for d in mdb["feeds"].find({"user_id": user_id})][:100]
-            except Exception as e2:
-                app.logger.error("Database find error on GET /feeds/by_user_id/%s: %s", user_id, str(e2), exc_info=True)
-                return jsonify(error=str(e2)), 500
         except Exception as e:
-            app.logger.error("Database find error on GET /feeds/by_user_id/%s: %s", user_id, str(e), exc_info=True)
+            app.logger.error("Database error on GET /feeds/by_user_id/%s: %s", user_id, str(e), exc_info=True)
             return jsonify(error=str(e)), 500
-        return jsonify(items), 200
+
+        return jsonify({
+            "items": items,
+            "page": page,
+            "page_size": page_size,
+            "total": total,
+            "total_pages": (total + page_size - 1) // page_size if page_size else 0,
+            "sort_by": sort_by,
+            "sort_dir": "desc" if direction == DESCENDING else "asc",
+        }), 200
 
     @app.route("/audit_logs/by_user_id/<path:user_id>", methods=["GET"])
     def get_audit_logs_by_user_id(user_id: str):
