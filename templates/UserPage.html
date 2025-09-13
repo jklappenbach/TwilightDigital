@@ -148,11 +148,9 @@
             </div>
         </div>
         <div id="pane-feed" class="tab-panel" role="tabpanel" aria-labelledby="tab-feed" aria-hidden="false">
-            <div class="card">
+                        <div class="card">
                 <div class="panel-header" style="display:flex; gap:10px; align-items:center; flex-wrap:nowrap;">
                     <div class="filter-wrap" style="display:flex; gap:8px; align-items:center;">
-                        <input id="filterText" class="filter-input" type="text"
-                               placeholder="Filter feed by title or description..."/>
                         <button id="applyFilterBtn" class="icon-btn" title="Apply filter" aria-label="Apply filter">
                             <span class="icon" aria-hidden="true">
                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -161,6 +159,8 @@
                               </svg>
                             </span>
                         </button>
+                        <input id="filterText" class="filter-input" type="text"
+                               placeholder="Filter feed by title or description..."/>
                     </div>
                     <div class="toolbar" style="display:flex; gap:8px; align-items:center; margin-left:auto;">
                         <button id="prevBtn" class="icon-btn" title="Previous page" aria-label="Previous page">
@@ -170,18 +170,11 @@
                               </svg>
                             </span>
                         </button>
+                        <input id="pageCurrent" class="page-field" type="number" min="1" value="1" aria-label="Current page" readonly style="width:4rem; text-align:center; height:32px; line-height:32px; border-radius:6px;"/>
                         <button id="nextBtn" class="icon-btn" title="Next page" aria-label="Next page">
                             <span class="icon" aria-hidden="true">
                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                                 <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                              </svg>
-                            </span>
-                        </button>
-                        <button id="selectAllBtn" class="icon-btn" title="Select all on this page" aria-label="Select all on this page">
-                            <span class="icon" aria-hidden="true">
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
-                                <path d="M8 12l3 3 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                               </svg>
                             </span>
                         </button>
@@ -197,39 +190,113 @@
                         </button>
                     </div>
                 </div>
-                <div class="feed-list" id="feedList">
-                    {% if feed and feed|length > 0 %}
-                        {% for item in feed %}
-                            {% set url = item.content_url or item.url or item.link or ('/events/' ~ (item.event_id or '')) %}
-                            {% set title = item.title or item.name or ('Untitled ' ~ loop.index) %}
-                            {% set raw_desc = item.body or item.description or '' %}
-                            {% set desc = raw_desc[:100] %}
-                            {% set thumb = item.thumbnail_url or item.thumbnail or item.thumb_url or '' %}
-                            {% set idval = item.feed_id or item.field_id or item.id or item.event_id or item.record_id or '' %}
-                            {% set dt   = item.date_time or item.datetime or item.date or '' %}
-                            {% set viewed = item.viewed if item.viewed is not none else '' %}
-                            <a class="feed-item"
-                               href="{{ url }}"
-                               data-id="{{ idval|e }}"
-                               data-title="{{ title|e }}"
-                               data-desc="{{ raw_desc|e }}"
-                               data-date="{{ dt|e }}"
-                               data-viewed="{{ viewed }}">
-                                <div class="checkbox-cell">
+                <div class="feed-list" id="feedList" style="padding:0; margin:0; max-height:60vh; overflow:auto;">
+                    <table id="feedTable" class="feed-table" role="grid" aria-label="Feed items" style="width:100%; border-collapse:collapse; table-layout:fixed;">
+                        <thead>
+                            <tr style="background-color:rgba(255,255,255,0.05); border-bottom:1px solid rgba(255,255,255,0.1);">
+                                <th id="th-select" scope="col" style="width:50px; text-align:center; padding:8px 4px;">
+                                    <input type="checkbox" id="headerSelectAll" aria-label="Toggle select all on current page" style="vertical-align:middle;"/>
+                                    <button id="sortSelectedBtn" class="sort-btn" type="button" aria-label="Sort by selection" style="margin-left:2px; background:none; border:none; cursor:pointer; padding:0; width:12px; line-height:1; font-size:10px;">
+                                        <span class="arrow" data-key="selected" aria-hidden="true">↕</span>
+                                    </button>
+                                </th>
+                                <th id="th-date" scope="col" style="width:200px; padding:8px 4px;">
+                                    <button id="sortDateBtn" class="sort-btn" type="button" aria-label="Sort by date" style="display:flex; align-items:center; gap:4px; width:100%; background:none; border:none; cursor:pointer; color:inherit; font-size:inherit;">
+                                        <span>Date</span>
+                                        <span class="arrow" data-key="date" aria-hidden="true" style="font-size:10px;">↕</span>
+                                    </button>
+                                </th>
+                                <th id="th-item" scope="col" style="width:300px; padding:8px 4px;">
+                                    <button id="sortItemBtn" class="sort-btn" type="button" aria-label="Sort by title" style="display:flex; align-items:center; gap:4px; width:100%; background:none; border:none; cursor:pointer; color:inherit; font-size:inherit;">
+                                        <span>Title</span>
+                                        <span class="arrow" data-key="item" aria-hidden="true" style="font-size:10px;">↕</span>
+                                    </button>
+                                </th>
+                                <th scope="col" style="padding:8px 4px;">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="feed-item" data-id="1" data-title="First item" data-desc="This is the first static item for layout testing." data-date="2025-09-01" data-viewed="" style="height:48px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <td class="checkbox-cell" style="text-align:center; padding:4px; vertical-align:middle;">
                                     <input type="checkbox" class="select-box" onclick="event.stopPropagation();"/>
-                                </div>
-                                <img class="thumb" src="{{ thumb }}" alt=""/>
-                                <div class="meta">
-                                    <div class="title">{{ title }}</div>
-                                    <div class="desc">{{ desc }}</div>
-                                </div>
-                            </a>
-                        {% endfor %}
-                    {% else %}
-                        <div class="muted">Your feed is empty.</div>
-                    {% endif %}
+                                </td>
+                                <td class="date-cell" style="padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;">2025-09-01</td>
+                                <td class="title-cell" style="padding:4px; vertical-align:middle;">
+                                    <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+                                        <img class="thumb" src="{{ url_for('static', filename='img/channel-default.png') }}" alt="" style="width:32px; height:32px; object-fit:cover; border-radius:4px; flex-shrink:0;"/>
+                                        <div class="title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;">First item</div>
+                                    </div>
+                                </td>
+                                <td class="desc-cell" style="padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);">This is the first static item for layout testing.</td>
+                            </tr>
+                            <tr class="feed-item" data-id="2" data-title="Second item" data-desc="Another example description to see column alignment." data-date="2025-09-02" data-viewed="" style="height:48px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <td class="checkbox-cell" style="text-align:center; padding:4px; vertical-align:middle;">
+                                    <input type="checkbox" class="select-box" onclick="event.stopPropagation();"/>
+                                </td>
+                                <td class="date-cell" style="padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;">2025-09-02</td>
+                                <td class="title-cell" style="padding:4px; vertical-align:middle;">
+                                    <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+                                        <img class="thumb" src="{{ url_for('static', filename='img/channel-default.png') }}" alt="" style="width:32px; height:32px; object-fit:cover; border-radius:4px; flex-shrink:0;"/>
+                                        <div class="title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;">Second item</div>
+                                    </div>
+                                </td>
+                                <td class="desc-cell" style="padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);">Another example description to see column alignment.</td>
+                            </tr>
+                            <tr class="feed-item" data-id="3" data-title="Third item" data-desc="A longer description goes here to test wrapping and layout behavior across the grid." data-date="2025-09-03" data-viewed="" style="height:48px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <td class="checkbox-cell" style="text-align:center; padding:4px; vertical-align:middle;">
+                                    <input type="checkbox" class="select-box" onclick="event.stopPropagation();"/>
+                                </td>
+                                <td class="date-cell" style="padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;">2025-09-03</td>
+                                <td class="title-cell" style="padding:4px; vertical-align:middle;">
+                                    <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+                                        <img class="thumb" src="{{ url_for('static', filename='img/channel-default.png') }}" alt="" style="width:32px; height:32px; object-fit:cover; border-radius:4px; flex-shrink:0;"/>
+                                        <div class="title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;">Third item</div>
+                                    </div>
+                                </td>
+                                <td class="desc-cell" style="padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);">A longer description goes here to test wrapping and layout behavior across the grid.</td>
+                            </tr>
+                            <tr class="feed-item" data-id="4" data-title="Fourth item" data-desc="Sample description number four for scrolling demonstration." data-date="2025-09-04" data-viewed="" style="height:48px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <td class="checkbox-cell" style="text-align:center; padding:4px; vertical-align:middle;">
+                                    <input type="checkbox" class="select-box" onclick="event.stopPropagation();"/>
+                                </td>
+                                <td class="date-cell" style="padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;">2025-09-04</td>
+                                <td class="title-cell" style="padding:4px; vertical-align:middle;">
+                                    <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+                                        <img class="thumb" src="{{ url_for('static', filename='img/channel-default.png') }}" alt="" style="width:32px; height:32px; object-fit:cover; border-radius:4px; flex-shrink:0;"/>
+                                        <div class="title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;">Fourth item</div>
+                                    </div>
+                                </td>
+                                <td class="desc-cell" style="padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);">Sample description number four for scrolling demonstration.</td>
+                            </tr>
+                            <tr class="feed-item" data-id="5" data-title="Fifth item" data-desc="Short description for the fifth example item." data-date="2025-09-05" data-viewed="" style="height:48px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <td class="checkbox-cell" style="text-align:center; padding:4px; vertical-align:middle;">
+                                    <input type="checkbox" class="select-box" onclick="event.stopPropagation();"/>
+                                </td>
+                                <td class="date-cell" style="padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;">2025-09-05</td>
+                                <td class="title-cell" style="padding:4px; vertical-align:middle;">
+                                    <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+                                        <img class="thumb" src="{{ url_for('static', filename='img/channel-default.png') }}" alt="" style="width:32px; height:32px; object-fit:cover; border-radius:4px; flex-shrink:0;"/>
+                                        <div class="title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;">Fifth item</div>
+                                    </div>
+                                </td>
+                                <td class="desc-cell" style="padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);">Short description for the fifth example item.</td>
+                            </tr>
+                            <tr class="feed-item" data-id="6" data-title="Sixth item" data-desc="Yet another example entry to show scroll behavior in the table." data-date="2025-09-06" data-viewed="" style="height:48px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <td class="checkbox-cell" style="text-align:center; padding:4px; vertical-align:middle;">
+                                    <input type="checkbox" class="select-box" onclick="event.stopPropagation();"/>
+                                </td>
+                                <td class="date-cell" style="padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;">2025-09-06</td>
+                                <td class="title-cell" style="padding:4px; vertical-align:middle;">
+                                    <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+                                        <img class="thumb" src="{{ url_for('static', filename='img/channel-default.png') }}" alt="" style="width:32px; height:32px; object-fit:cover; border-radius:4px; flex-shrink:0;"/>
+                                        <div class="title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;">Sixth item</div>
+                                    </div>
+                                </td>
+                                <td class="desc-cell" style="padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);">Yet another example entry to show scroll behavior in the table.</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-
                 <div class="panel-footer">
                     <span id="pageInfo" class="muted"></span>
                 </div>
@@ -353,12 +420,20 @@
         const deleteBtn = document.getElementById('deleteBtn');
         const pageInfo = document.getElementById('pageInfo');
         const panel = document.getElementById('feed-panel');
+        const pageCurrent = document.getElementById('pageCurrent');
+        const feedTable = document.getElementById('feedTable');
+        const headerSelectAll = document.getElementById('headerSelectAll');
+        const sortSelectedBtn = document.getElementById('sortSelectedBtn');
+        const sortDateBtn = document.getElementById('sortDateBtn');
+        const sortItemBtn = document.getElementById('sortItemBtn');
+
 
         // If you host the API at another base URL, set it here or on the element's data attribute.
         const fetchUrlBase = panel.dataset.apiBase || '';
 
         const PAGE_SIZE = 20;
         let currentPage = 0;
+        let sortState = { key: 'date', dir: -1 }; // dir: 1 asc, -1 desc. Default: newest first (date desc).
 
         function allItems() {
             return Array.from(listEl.querySelectorAll('.feed-item'));
@@ -384,6 +459,80 @@
             return allItems().filter(el => el.dataset.match !== '0');
         }
 
+        function getSortValue(row, key) {
+            if (key === 'selected') {
+                const box = row.querySelector('.select-box');
+                return box ? (box.checked ? 1 : 0) : 0;
+            }
+            if (key === 'date') {
+                // Prefer ISO date in data-date
+                const t = Date.parse(row.dataset.date || '');
+                return isNaN(t) ? 0 : t;
+            }
+            if (key === 'item') {
+                return (row.dataset.title || '').toLowerCase();
+            }
+            return 0;
+        }
+
+        function updateSortArrows() {
+            const arrows = document.querySelectorAll('.sort-btn .arrow');
+            arrows.forEach(a => {
+                const key = a.getAttribute('data-key');
+                if (key === sortState.key) {
+                    a.textContent = sortState.dir === 1 ? '▲' : '▼';
+                } else {
+                    a.textContent = '↕';
+                }
+            });
+
+            // aria-sort for accessibility
+            const ths = {
+                selected: document.getElementById('th-select'),
+                date: document.getElementById('th-date'),
+                item: document.getElementById('th-item')
+            };
+            Object.entries(ths).forEach(([key, th]) => {
+                if (!th) return;
+                if (key === sortState.key) {
+                    th.setAttribute('aria-sort', sortState.dir === 1 ? 'ascending' : 'descending');
+                } else {
+                    th.removeAttribute('aria-sort');
+                }
+            });
+        }
+
+        function sortRows() {
+            const tbody = feedTable.querySelector('tbody');
+            const rows = visibleMatches(); // sort only matching rows, keep non-matching below hidden in their order
+            rows.sort((a, b) => {
+                const av = getSortValue(a, sortState.key);
+                const bv = getSortValue(b, sortState.key);
+                if (av < bv) return -1 * sortState.dir;
+                if (av > bv) return 1 * sortState.dir;
+                // tie-breaker by title asc
+                const at = (a.dataset.title || '').toLowerCase();
+                const bt = (b.dataset.title || '').toLowerCase();
+                if (at < bt) return -1;
+                if (at > bt) return 1;
+                return 0;
+            });
+            // Append in new order
+            rows.forEach(r => tbody.appendChild(r));
+            updateSortArrows();
+        }
+
+        function toggleSort(key) {
+            if (sortState.key === key) {
+                sortState.dir = -sortState.dir; // flip
+            } else {
+                sortState.key = key;
+                sortState.dir = key === 'date' ? -1 : 1; // sensible defaults
+            }
+            sortRows();
+            renderPage();
+        }
+
         function renderPage() {
             const matches = visibleMatches();
             const total = matches.length;
@@ -393,10 +542,19 @@
             // Hide all first
             allItems().forEach(el => el.style.display = 'none');
 
+            // Ensure order is correct before showing slice
+            // (sortRows already reorders DOM for visible matches)
+
             // Show page slice
             const start = currentPage * PAGE_SIZE;
             const end = start + PAGE_SIZE;
             matches.slice(start, end).forEach(el => el.style.display = '');
+
+            if (pageCurrent) {
+                pageCurrent.value = pages ? (currentPage + 1) : 0;
+                pageCurrent.min = pages ? 1 : 0;
+                pageCurrent.max = pages;
+            }
 
             pageInfo.textContent = total
                 ? `Showing ${Math.min(end, total)} of ${total} (page ${currentPage + 1} of ${pages})`
@@ -484,6 +642,21 @@
                 currentPage += 1;
                 renderPage();
             }
+        });
+
+        sortSelectedBtn.addEventListener('click', () => toggleSort('selected'));
+        sortDateBtn.addEventListener('click', () => toggleSort('date'));
+        sortItemBtn.addEventListener('click', () => toggleSort('item'));
+
+        headerSelectAll.addEventListener('change', () => {
+            const matches = visibleMatches();
+            const start = currentPage * PAGE_SIZE;
+            const end = start + PAGE_SIZE;
+            const check = headerSelectAll.checked;
+            matches.slice(start, end).forEach(el => {
+                const box = el.querySelector('.select-box');
+                if (box) box.checked = check;
+            });
         });
 
         selectAllBtn.addEventListener('click', selectAllVisible);
