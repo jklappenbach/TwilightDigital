@@ -216,85 +216,36 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr class="feed-item" data-id="1" data-title="First item" data-desc="This is the first static item for layout testing." data-date="2025-09-01" data-viewed="" style="height:48px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                {% if feed and feed|length > 0 %}
+                    {% for item in feed %}
+                        {% set url = item.content_url or item.url or item.link or ('/events/' ~ (item.event_id or '')) %}
+                        {% set title = item.title or item.name or ('Untitled ' ~ loop.index) %}
+                        {% set raw_desc = item.body or item.description or '' %}
+                        {% set desc = raw_desc[:100] %}
+                        {% set thumb = item.thumbnail_url or item.thumbnail or item.thumb_url or '' %}
+                        {% set idval = item.feed_id or item.field_id or item.id or item.event_id or item.record_id or '' %}
+                        {% set dt = item.date_time or item.datetime or item.date or '' %}
+                        {% set viewed = item.viewed if item.viewed is not none else '' %}
+                            <tr class="feed-item" data-id="{{ idval }}" data-title="{{ title }}" data-desc="{{ desc }}" data-date="2025-09-01" data-viewed="{{ viewed }}" style="height:48px; border-bottom:1px solid rgba(255,255,255,0.05);">
                                 <td class="checkbox-cell" style="text-align:center; padding:4px; vertical-align:middle;">
                                     <input type="checkbox" class="select-box" onclick="event.stopPropagation();"/>
                                 </td>
-                                <td class="date-cell" style="padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;">2025-09-01</td>
+                                <td class="date-cell" style="padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;">{{ dt }}</td>
                                 <td class="title-cell" style="padding:4px; vertical-align:middle;">
-                                    <div style="display:flex; align-items:center; gap:8px; min-width:0;">
-                                        <img class="thumb" src="{{ url_for('static', filename='img/channel-default.png') }}" alt="" style="width:32px; height:32px; object-fit:cover; border-radius:4px; flex-shrink:0;"/>
-                                        <div class="title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;">First item</div>
-                                    </div>
+                                    <a href="{{ url }}">
+                                        <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+                                            <img class="thumb" src="{{ url_for('static', filename='{{ thumb }}') }}" alt="" style="width:32px; height:32px; object-fit:cover; border-radius:4px; flex-shrink:0;"/>
+                                            <div class="title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;">
+                                                {{ title }}</div>
+                                        </div>
+                                    </a>
                                 </td>
-                                <td class="desc-cell" style="padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);">This is the first static item for layout testing.</td>
+                                <td class="desc-cell" style="padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);">
+                                    {{ desc }}</td>
                             </tr>
-                            <tr class="feed-item" data-id="2" data-title="Second item" data-desc="Another example description to see column alignment." data-date="2025-09-02" data-viewed="" style="height:48px; border-bottom:1px solid rgba(255,255,255,0.05);">
-                                <td class="checkbox-cell" style="text-align:center; padding:4px; vertical-align:middle;">
-                                    <input type="checkbox" class="select-box" onclick="event.stopPropagation();"/>
-                                </td>
-                                <td class="date-cell" style="padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;">2025-09-02</td>
-                                <td class="title-cell" style="padding:4px; vertical-align:middle;">
-                                    <div style="display:flex; align-items:center; gap:8px; min-width:0;">
-                                        <img class="thumb" src="{{ url_for('static', filename='img/channel-default.png') }}" alt="" style="width:32px; height:32px; object-fit:cover; border-radius:4px; flex-shrink:0;"/>
-                                        <div class="title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;">Second item</div>
-                                    </div>
-                                </td>
-                                <td class="desc-cell" style="padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);">Another example description to see column alignment.</td>
-                            </tr>
-                            <tr class="feed-item" data-id="3" data-title="Third item" data-desc="A longer description goes here to test wrapping and layout behavior across the grid." data-date="2025-09-03" data-viewed="" style="height:48px; border-bottom:1px solid rgba(255,255,255,0.05);">
-                                <td class="checkbox-cell" style="text-align:center; padding:4px; vertical-align:middle;">
-                                    <input type="checkbox" class="select-box" onclick="event.stopPropagation();"/>
-                                </td>
-                                <td class="date-cell" style="padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;">2025-09-03</td>
-                                <td class="title-cell" style="padding:4px; vertical-align:middle;">
-                                    <div style="display:flex; align-items:center; gap:8px; min-width:0;">
-                                        <img class="thumb" src="{{ url_for('static', filename='img/channel-default.png') }}" alt="" style="width:32px; height:32px; object-fit:cover; border-radius:4px; flex-shrink:0;"/>
-                                        <div class="title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;">Third item</div>
-                                    </div>
-                                </td>
-                                <td class="desc-cell" style="padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);">A longer description goes here to test wrapping and layout behavior across the grid.</td>
-                            </tr>
-                            <tr class="feed-item" data-id="4" data-title="Fourth item" data-desc="Sample description number four for scrolling demonstration." data-date="2025-09-04" data-viewed="" style="height:48px; border-bottom:1px solid rgba(255,255,255,0.05);">
-                                <td class="checkbox-cell" style="text-align:center; padding:4px; vertical-align:middle;">
-                                    <input type="checkbox" class="select-box" onclick="event.stopPropagation();"/>
-                                </td>
-                                <td class="date-cell" style="padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;">2025-09-04</td>
-                                <td class="title-cell" style="padding:4px; vertical-align:middle;">
-                                    <div style="display:flex; align-items:center; gap:8px; min-width:0;">
-                                        <img class="thumb" src="{{ url_for('static', filename='img/channel-default.png') }}" alt="" style="width:32px; height:32px; object-fit:cover; border-radius:4px; flex-shrink:0;"/>
-                                        <div class="title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;">Fourth item</div>
-                                    </div>
-                                </td>
-                                <td class="desc-cell" style="padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);">Sample description number four for scrolling demonstration.</td>
-                            </tr>
-                            <tr class="feed-item" data-id="5" data-title="Fifth item" data-desc="Short description for the fifth example item." data-date="2025-09-05" data-viewed="" style="height:48px; border-bottom:1px solid rgba(255,255,255,0.05);">
-                                <td class="checkbox-cell" style="text-align:center; padding:4px; vertical-align:middle;">
-                                    <input type="checkbox" class="select-box" onclick="event.stopPropagation();"/>
-                                </td>
-                                <td class="date-cell" style="padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;">2025-09-05</td>
-                                <td class="title-cell" style="padding:4px; vertical-align:middle;">
-                                    <div style="display:flex; align-items:center; gap:8px; min-width:0;">
-                                        <img class="thumb" src="{{ url_for('static', filename='img/channel-default.png') }}" alt="" style="width:32px; height:32px; object-fit:cover; border-radius:4px; flex-shrink:0;"/>
-                                        <div class="title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;">Fifth item</div>
-                                    </div>
-                                </td>
-                                <td class="desc-cell" style="padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);">Short description for the fifth example item.</td>
-                            </tr>
-                            <tr class="feed-item" data-id="6" data-title="Sixth item" data-desc="Yet another example entry to show scroll behavior in the table." data-date="2025-09-06" data-viewed="" style="height:48px; border-bottom:1px solid rgba(255,255,255,0.05);">
-                                <td class="checkbox-cell" style="text-align:center; padding:4px; vertical-align:middle;">
-                                    <input type="checkbox" class="select-box" onclick="event.stopPropagation();"/>
-                                </td>
-                                <td class="date-cell" style="padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;">2025-09-06</td>
-                                <td class="title-cell" style="padding:4px; vertical-align:middle;">
-                                    <div style="display:flex; align-items:center; gap:8px; min-width:0;">
-                                        <img class="thumb" src="{{ url_for('static', filename='img/channel-default.png') }}" alt="" style="width:32px; height:32px; object-fit:cover; border-radius:4px; flex-shrink:0;"/>
-                                        <div class="title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;">Sixth item</div>
-                                    </div>
-                                </td>
-                                <td class="desc-cell" style="padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);">Yet another example entry to show scroll behavior in the table.</td>
-                            </tr>
-                        </tbody>
+                    {% endfor %}
+                {% endif %}
+                         </tbody>
                     </table>
                 </div>
                 <div class="panel-footer">
