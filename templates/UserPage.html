@@ -226,7 +226,8 @@
                         {% set idval = item.feed_id or item.field_id or item.id or item.event_id or item.record_id or '' %}
                         {% set dt = item.date_time or item.datetime or item.date or '' %}
                         {% set viewed = item.viewed if item.viewed is not none else '' %}
-                            <tr class="feed-item" data-id="{{ idval }}" data-title="{{ title }}" data-desc="{{ desc }}" data-date="2025-09-01" data-viewed="{{ viewed }}" style="height:48px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                            <tr class="feed-item" data-id="{{ idval }}" data-title="{{ title }}" data-desc="{{ desc }}"
+                                    data-date="{{ dt }}" data-viewed="{{ viewed }}" style="height:48px; border-bottom:1px solid rgba(255,255,255,0.05);">
                                 <td class="checkbox-cell" style="text-align:center; padding:4px; vertical-align:middle;">
                                     <input type="checkbox" class="select-box" onclick="event.stopPropagation();"/>
                                 </td>
@@ -235,13 +236,11 @@
                                     <a href="{{ url }}">
                                         <div style="display:flex; align-items:center; gap:8px; min-width:0;">
                                             <img class="thumb" src="{{ url_for('static', filename='{{ thumb }}') }}" alt="" style="width:32px; height:32px; object-fit:cover; border-radius:4px; flex-shrink:0;"/>
-                                            <div class="title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;">
-                                                {{ title }}</div>
+                                            <div class="title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;">{{ title }}</div>
                                         </div>
                                     </a>
                                 </td>
-                                <td class="desc-cell" style="padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);">
-                                    {{ desc }}</td>
+                                <td class="desc-cell" style="padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);">{{ desc }}</td>
                             </tr>
                     {% endfor %}
                 {% endif %}
