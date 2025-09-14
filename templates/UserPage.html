@@ -215,37 +215,9 @@
                                 <th scope="col" style="padding:8px 4px;">Description</th>
                             </tr>
                         </thead>
-                        <tbody>
-                {% if feed and feed|length > 0 %}
-                    {% for item in feed %}
-                        {% set url = item.content_url or item.url or item.link or ('/events/' ~ (item.event_id or '')) %}
-                        {% set title = item.title or item.name or ('Untitled ' ~ loop.index) %}
-                        {% set raw_desc = item.body or item.description or '' %}
-                        {% set desc = raw_desc[:100] %}
-                        {% set thumb = item.thumbnail_url or item.thumbnail or item.thumb_url or '' %}
-                        {% set idval = item.feed_id or item.field_id or item.id or item.event_id or item.record_id or '' %}
-                        {% set dt = item.date_time or item.datetime or item.date or '' %}
-                        {% set viewed = item.viewed if item.viewed is not none else '' %}
-                            <tr class="feed-item" data-id="{{ idval }}" data-title="{{ title }}" data-desc="{{ desc }}" data-date="2025-09-01" data-viewed="{{ viewed }}" style="height:48px; border-bottom:1px solid rgba(255,255,255,0.05);">
-                                <td class="checkbox-cell" style="text-align:center; padding:4px; vertical-align:middle;">
-                                    <input type="checkbox" class="select-box" onclick="event.stopPropagation();"/>
-                                </td>
-                                <td class="date-cell" style="padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;">{{ dt }}</td>
-                                <td class="title-cell" style="padding:4px; vertical-align:middle;">
-                                    <a href="{{ url }}">
-                                        <div style="display:flex; align-items:center; gap:8px; min-width:0;">
-                                            <img class="thumb" src="{{ url_for('static', filename='{{ thumb }}') }}" alt="" style="width:32px; height:32px; object-fit:cover; border-radius:4px; flex-shrink:0;"/>
-                                            <div class="title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;">
-                                                {{ title }}</div>
-                                        </div>
-                                    </a>
-                                </td>
-                                <td class="desc-cell" style="padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);">
-                                    {{ desc }}</td>
-                            </tr>
-                    {% endfor %}
-                {% endif %}
-                         </tbody>
+                        <tbody id="feedTbody">
+                            <!-- Feed rows rendered dynamically -->
+                        </tbody>
                     </table>
                 </div>
                 <div class="panel-footer">
@@ -326,7 +298,152 @@
         activate(initial);
     })();
 
-    // User menu popup behavior
+    // Data initialization with session-preserving AJAX
+    (function () {
+        const SESSION_HEADER = 'X-Session-Id';
+        const sessionId = '{{ sid }}';
+
+        async function fetchWithSession(input, init = {}) {
+            if (!sessionId) throw new Error("No session ID available!");
+            init.headers = init.headers || {};
+            init.headers[SESSION_HEADER] = sessionId;
+            return fetch(input, init);
+        }
+
+        const DEFAULT_THUMB = "{{ url_for('static', filename='img/channel-default.png') }}";
+
+        // DOM elements
+        const channelsList = document.getElementById('channelsList');
+        const myChannelsList = document.getElementById('myChannelsList');
+        const feedTbody = document.getElementById('feedTbody');
+
+        function el(tag, attrs = {}, children = []) {
+            const node = document.createElement(tag);
+            Object.entries(attrs).forEach(([k, v]) => {
+                if (k === 'class') node.className = v;
+                else if (k === 'dataset') Object.entries(v).forEach(([dk, dv]) => node.dataset[dk] = dv);
+                else if (k === 'text') node.textContent = v;
+                else node.setAttribute(k, v);
+            });
+            children.forEach(c => node.appendChild(c));
+            return node;
+        }
+
+        function safeText(v, fallback = '') {
+            return v == null ? fallback : String(v);
+        }
+
+        // Render channels (subscriptions/creators)
+        function renderChannels(listEl, items) {
+            listEl.innerHTML = '';
+            if (!Array.isArray(items) || items.length === 0) {
+                listEl.appendChild(
+                    el('li', { class: 'channel-item' }, [
+                        el('img', { class: 'channel-thumb', src: DEFAULT_THUMB, alt: 'Default channel thumbnail' }),
+                        el('span', { class: 'channel-title', text: '{{ _("No channels yet") }}' })
+                    ])
+                );
+                return;
+            }
+            items.forEach(ch => {
+                const title = safeText(ch.title || ch.name || ch.screen_name || '{{ _("Untitled") }}');
+                const thumb = ch.thumbnail_url || ch.thumbnail || DEFAULT_THUMB;
+                listEl.appendChild(
+                    el('li', { class: 'channel-item' }, [
+                        el('img', { class: 'channel-thumb', src: thumb || DEFAULT_THUMB, alt: `${title} thumbnail` }),
+                        el('span', { class: 'channel-title', text: title })
+                    ])
+                );
+            });
+        }
+
+        // Render feed items
+        function renderFeed(items) {
+            feedTbody.innerHTML = '';
+            if (!Array.isArray(items)) return;
+
+            items.forEach((item, idx) => {
+                const url = item.content_url || item.url || item.link || (`/events/${item.event_id || ''}`);
+                const title = safeText(item.title || item.name || `Untitled ${idx + 1}`);
+                const rawDesc = safeText(item.body || item.description || '');
+                const desc = rawDesc.length > 100 ? rawDesc.slice(0, 100) : rawDesc;
+                const thumb = item.thumbnail_url || item.thumbnail || item.thumb_url || '';
+                const idval = item.feed_id || item.field_id || item.id || item.event_id || item.record_id || (`row-${idx}`);
+                const dt = safeText(item.date_time || item.datetime || item.date || '');
+                const viewed = item.viewed != null ? String(item.viewed) : '';
+
+                const tr = el('tr', {
+                    class: 'feed-item',
+                    dataset: { id: idval, title: title, desc: desc, date: dt, viewed: viewed },
+                    style: 'height:48px; border-bottom:1px solid rgba(255,255,255,0.05);'
+                }, [
+                    el('td', { class: 'checkbox-cell', style: 'text-align:center; padding:4px; vertical-align:middle;' }, [
+                        el('input', { type: 'checkbox', class: 'select-box' })
+                    ]),
+                    el('td', { class: 'date-cell', style: 'padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;' }, [
+                        document.createTextNode(dt)
+                    ]),
+                    el('td', { class: 'title-cell', style: 'padding:4px; vertical-align:middle;' }, [
+                        el('a', { href: url }, [
+                            el('div', { style: 'display:flex; align-items:center; gap:8px; min-width:0;' }, [
+                                el('img', { class: 'thumb', src: thumb || DEFAULT_THUMB, alt: '', style: 'width:32px; height:32px; object-fit:cover; border-radius:4px; flex-shrink:0;' }),
+                                el('div', { class: 'title', style: 'white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;', text: title })
+                            ])
+                        ])
+                    ]),
+                    el('td', { class: 'desc-cell', style: 'padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);' }, [
+                        document.createTextNode(desc)
+                    ])
+                ]);
+
+                // Stop click on checkbox from bubbling
+                tr.querySelector('.select-box').addEventListener('click', (e) => e.stopPropagation());
+                feedTbody.appendChild(tr);
+            });
+        }
+
+        async function loadAll() {
+            try {
+                const [feedRes, channelsRes, subsRes] = await Promise.all([
+                    fetchWithSession('{{ url_for("api_user_feed") }}'),
+                    fetchWithSession('{{ url_for("api_user_channels") }}'),
+                    fetchWithSession('{{ url_for("api_user_subscriptions") }}')
+                ]);
+
+                const [feedJson, channelsJson, subsJson] = await Promise.all([
+                    feedRes.json().catch(() => ({ ok: false })),
+                    channelsRes.json().catch(() => ({ ok: false })),
+                    subsRes.json().catch(() => ({ ok: false }))
+                ]);
+
+                if (feedJson.ok) renderFeed(feedJson.items || []);
+                if (channelsJson.ok) renderChannels(myChannelsList, channelsJson.items || []);
+                // Subscriptions could be used to render "Channels" list on the left as creators being followed
+                if (subsJson.ok) {
+                    const creators = Array.isArray(subsJson.items) ? subsJson.items.map(s => s.channel || s.creator || s) : [];
+                    renderChannels(channelsList, creators);
+                }
+            } catch (e) {
+                // Soft-fail: leave lists empty if something goes wrong
+                console.error('Failed to initialize user data', e);
+            }
+
+            // After populating feed rows, run the existing table behaviors (filter/sort/paginate) initializer
+            if (typeof initializeFeedTableBehavior === 'function') {
+                initializeFeedTableBehavior();
+            }
+        }
+
+        // Expose a hook name used below to re-run table setup after data loads
+        window.initializeFeedTableBehavior = function () {
+            // no-op placeholder if later needed; current code binds on static IDs below
+        };
+
+        document.addEventListener('DOMContentLoaded', loadAll);
+    })();
+</script>
+
+<script>
     (function () {
         const btn = document.getElementById('userMenuBtn');
         const menu = document.getElementById('userMenu');
@@ -380,21 +497,20 @@
 
 
         // If you host the API at another base URL, set it here or on the element's data attribute.
-        const fetchUrlBase = panel.dataset.apiBase || '';
+        const fetchUrlBase = panel ? (panel.dataset.apiBase || '') : '';
 
         const PAGE_SIZE = 20;
         let currentPage = 0;
         let sortState = { key: 'date', dir: -1 }; // dir: 1 asc, -1 desc. Default: newest first (date desc).
 
         function allItems() {
-            return Array.from(listEl.querySelectorAll('.feed-item'));
+            return Array.from(document.querySelectorAll('#feedTbody .feed-item'));
         }
 
         function applyFilter() {
             const q = (filterInput.value || '').toLowerCase().trim();
             const items = allItems();
 
-            // Mark items with dataset for filtering without removing from DOM
             items.forEach(el => {
                 const title = (el.dataset.title || '').toLowerCase();
                 const desc = (el.dataset.desc || '').toLowerCase();
@@ -416,7 +532,6 @@
                 return box ? (box.checked ? 1 : 0) : 0;
             }
             if (key === 'date') {
-                // Prefer ISO date in data-date
                 const t = Date.parse(row.dataset.date || '');
                 return isNaN(t) ? 0 : t;
             }
@@ -437,7 +552,6 @@
                 }
             });
 
-            // aria-sort for accessibility
             const ths = {
                 selected: document.getElementById('th-select'),
                 date: document.getElementById('th-date'),
@@ -454,31 +568,29 @@
         }
 
         function sortRows() {
-            const tbody = feedTable.querySelector('tbody');
-            const rows = visibleMatches(); // sort only matching rows, keep non-matching below hidden in their order
+            const tbody = document.getElementById('feedTbody');
+            const rows = visibleMatches();
             rows.sort((a, b) => {
                 const av = getSortValue(a, sortState.key);
                 const bv = getSortValue(b, sortState.key);
                 if (av < bv) return -1 * sortState.dir;
                 if (av > bv) return 1 * sortState.dir;
-                // tie-breaker by title asc
                 const at = (a.dataset.title || '').toLowerCase();
                 const bt = (b.dataset.title || '').toLowerCase();
                 if (at < bt) return -1;
                 if (at > bt) return 1;
                 return 0;
             });
-            // Append in new order
             rows.forEach(r => tbody.appendChild(r));
             updateSortArrows();
         }
 
         function toggleSort(key) {
             if (sortState.key === key) {
-                sortState.dir = -sortState.dir; // flip
+                sortState.dir = -sortState.dir;
             } else {
                 sortState.key = key;
-                sortState.dir = key === 'date' ? -1 : 1; // sensible defaults
+                sortState.dir = key === 'date' ? -1 : 1;
             }
             sortRows();
             renderPage();
@@ -487,18 +599,13 @@
         function renderPage() {
             const matches = visibleMatches();
             const total = matches.length;
-            const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+            const pages = Math.max(1, Math.ceil(total / 20));
             currentPage = Math.min(currentPage, pages - 1);
 
-            // Hide all first
             allItems().forEach(el => el.style.display = 'none');
 
-            // Ensure order is correct before showing slice
-            // (sortRows already reorders DOM for visible matches)
-
-            // Show page slice
-            const start = currentPage * PAGE_SIZE;
-            const end = start + PAGE_SIZE;
+            const start = currentPage * 20;
+            const end = start + 20;
             matches.slice(start, end).forEach(el => el.style.display = '');
 
             if (pageCurrent) {
@@ -514,8 +621,8 @@
 
         function selectAllVisible() {
             const matches = visibleMatches();
-            const start = currentPage * PAGE_SIZE;
-            const end = start + PAGE_SIZE;
+            const start = currentPage * 20;
+            const end = start + 20;
             matches.slice(start, end).forEach(el => {
                 const box = el.querySelector('.select-box');
                 if (box) box.checked = true;
@@ -540,7 +647,6 @@
 
             const errors = [];
             for (const id of ids) {
-                // Try common ID field routes (prefer /feeds/<id>, fallback to /feed/<id>)
                 const candidates = [
                     `${fetchUrlBase}/feeds/${encodeURIComponent(id)}`,
                     `${fetchUrlBase}/feed/${encodeURIComponent(id)}`
@@ -553,9 +659,7 @@
                             deleted = true;
                             break;
                         }
-                    } catch (e) {
-                        // keep trying
-                    }
+                    } catch (_) { /* keep trying */ }
                 }
                 if (!deleted) errors.push(id);
             }
@@ -564,8 +668,7 @@
                 alert(`Failed to delete ${errors.length} item(s): ${errors.join(', ')}`);
             }
 
-            // Remove deleted items from DOM
-            allItems().forEach(el => {
+            document.querySelectorAll('#feedTbody .feed-item').forEach(el => {
                 const id = el.getAttribute('data-id');
                 if (ids.includes(id)) el.remove();
             });
@@ -573,7 +676,6 @@
             applyFilter();
         }
 
-        // Event bindings
         applyFilterBtn.addEventListener('click', applyFilter);
         filterInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') applyFilter();
@@ -588,7 +690,7 @@
 
         nextBtn.addEventListener('click', () => {
             const total = visibleMatches().length;
-            const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+            const pages = Math.max(1, Math.ceil(total / 20));
             if (currentPage < pages - 1) {
                 currentPage += 1;
                 renderPage();
@@ -601,8 +703,8 @@
 
         headerSelectAll.addEventListener('change', () => {
             const matches = visibleMatches();
-            const start = currentPage * PAGE_SIZE;
-            const end = start + PAGE_SIZE;
+            const start = currentPage * 20;
+            const end = start + 20;
             const check = headerSelectAll.checked;
             matches.slice(start, end).forEach(el => {
                 const box = el.querySelector('.select-box');
@@ -610,13 +712,21 @@
             });
         });
 
-        selectAllBtn.addEventListener('click', selectAllVisible);
+        if (document.getElementById('selectAllBtn')) {
+            document.getElementById('selectAllBtn').addEventListener('click', selectAllVisible);
+        }
         deleteBtn.addEventListener('click', deleteSelected);
 
-        // Initialize filter markers and first render
-        allItems().forEach(el => el.dataset.match = '1');
-        renderPage();
+        // Initialize default view state for filters/pagination when rows get injected
+        // Markers will be set after feed rows are rendered
+        const observer = new MutationObserver(() => {
+            document.querySelectorAll('#feedTbody .feed-item').forEach(el => el.dataset.match = el.dataset.match || '1');
+            sortRows();
+            renderPage();
+        });
+        observer.observe(document.getElementById('feedTbody'), { childList: true });
     })();
 </script>
+
 </body>
 </html>

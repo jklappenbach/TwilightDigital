@@ -620,46 +620,64 @@ def user_page():
     # Attempt to resolve current user's id
     user_id = session.get("current_user") or session.get("user_id")
 
-    # Prepare containers
-    my_channels = []
-    subscriptions = []
-    feed = []
+    # No longer prefetch feed/channels/subscriptions here; the page will fetch them via AJAX.
+    if not base_url:
+        app.logger.warning("TWILIGHT_DIGITAL_API_BASE_URL not configured; user page data AJAX endpoints will fail.")
+    if not user_id:
+        app.logger.info("No user_id in session; user page will show empty data until sign-in completes.")
 
-    # Load channels created by this user (creator_id = user_id)
-    if base_url and user_id:
-        try:
-            status, resp = _http_json("GET", f"{base_url}/channels/by_creator_id/{user_id}")
-            if status == 200 and isinstance(resp, list):
-                my_channels = resp
-            else:
-                app.logger.error(f"Failed to load channels for creator_id={user_id}: HTTP {status} {resp}")
-        except Exception as ex:
-            app.logger.exception(f"Error loading channels for creator_id={user_id}: {ex}")
+    return render_template("UserPage.html", sid=session.sid)
 
-        # Load subscriptions for this user (by user_id)
-        try:
-            status, resp = _http_json("GET", f"{base_url}/subscriptions/by_user_id/{user_id}")
-            if status == 200 and isinstance(resp, list):
-                subscriptions = resp
-            else:
-                app.logger.error(f"Failed to load subscriptions for user_id={user_id}: HTTP {status} {resp}")
-        except Exception as ex:
-            app.logger.exception(f"Error loading subscriptions for user_id={user_id}: {ex}")
-        try:
-            status, resp = _http_json("GET", f"{base_url}/feeds/by_user_id/{user_id}")
-            if status == 200 and isinstance(resp, list):
-                feed = resp
-            else:
-                app.logger.error(f"Failed to load feeds for user_id={user_id}: HTTP {status} {resp}")
-        except Exception as ex:
-            app.logger.exception(f"Error loading feeds for user_id={user_id}: {ex}")
-    else:
-        if not base_url:
-            app.logger.warning("TWILIGHT_DIGITAL_API_BASE_URL not configured; skipping data prefetch for UserPage")
-        if not user_id:
-            app.logger.info("No user_id in session; skipping channels/subscriptions prefetch")
+@app.route('/api/user/feed', methods=['GET'])
+def api_user_feed():
+    user_id = session.get("current_user") or session.get("user_id")
+    if not user_id:
+        return jsonify(ok=False, error="Unauthorized"), 401
+    if not base_url:
+        return jsonify(ok=False, error="Service not configured"), 503
+    try:
+        status, resp = _http_json("GET", f"{base_url}/feeds/by_user_id/{user_id}")
+        if status == 200 and isinstance(resp, list):
+            return jsonify(ok=True, items=resp)
+        app.logger.error(f"/api/user/feed: HTTP {status} {resp}")
+        return jsonify(ok=False, error="Failed to load feed"), 502
+    except Exception as ex:
+        app.logger.exception(f"/api/user/feed: exception: {ex}")
+        return jsonify(ok=False, error="Internal error"), 500
 
-    return render_template("UserPage.html", sid=session.sid, feed=feed, my_channels=my_channels, subscriptions=subscriptions)
+@app.route('/api/user/channels', methods=['GET'])
+def api_user_channels():
+    user_id = session.get("current_user") or session.get("user_id")
+    if not user_id:
+        return jsonify(ok=False, error="Unauthorized"), 401
+    if not base_url:
+        return jsonify(ok=False, error="Service not configured"), 503
+    try:
+        status, resp = _http_json("GET", f"{base_url}/channels/by_creator_id/{user_id}")
+        if status == 200 and isinstance(resp, list):
+            return jsonify(ok=True, items=resp)
+        app.logger.error(f"/api/user/channels: HTTP {status} {resp}")
+        return jsonify(ok=False, error="Failed to load channels"), 502
+    except Exception as ex:
+        app.logger.exception(f"/api/user/channels: exception: {ex}")
+        return jsonify(ok=False, error="Internal error"), 500
+
+@app.route('/api/user/subscriptions', methods=['GET'])
+def api_user_subscriptions():
+    user_id = session.get("current_user") or session.get("user_id")
+    if not user_id:
+        return jsonify(ok=False, error="Unauthorized"), 401
+    if not base_url:
+        return jsonify(ok=False, error="Service not configured"), 503
+    try:
+        status, resp = _http_json("GET", f"{base_url}/subscriptions/by_user_id/{user_id}")
+        if status == 200 and isinstance(resp, list):
+            return jsonify(ok=True, items=resp)
+        app.logger.error(f"/api/user/subscriptions: HTTP {status} {resp}")
+        return jsonify(ok=False, error="Failed to load subscriptions"), 502
+    except Exception as ex:
+        app.logger.exception(f"/api/user/subscriptions: exception: {ex}")
+        return jsonify(ok=False, error="Internal error"), 500
 
 @app.route('/signout', methods=['GET'])
 def sign_out():
