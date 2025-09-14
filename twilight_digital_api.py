@@ -748,14 +748,29 @@ def create_app(mdb=None):
 
         direction = DESCENDING if sort_dir == "desc" else ASCENDING
 
+        # Optional text filter on title/description
+        q = request.args.get("q")
+        if q is not None and not isinstance(q, str):
+            return jsonify(error="q must be a string"), 400
+        if q is not None:
+            q = q.strip()
+            if len(q) > 200:
+                return jsonify(error="q too long (max 200 chars)"), 400
+
         query = {"user_id": user_id}
+        if q:
+            # Case-insensitive contains on title or description
+            query["$or"] = [
+                {"title": {"$regex": q, "$options": "i"}},
+                {"description": {"$regex": q, "$options": "i"}},
+            ]
 
         # Optional projection to trim payload if needed
         projection = None
         # projection = {"_id": 0, "event_id": 1, "user_id": 1, "date_time": 1, "title": 1, "description": 1, "thumbnail_url": 1, "content_url": 1}
 
         try:
-            # Total count (for pagination UI)
+            # Total count (for pagination UI) — apply same filter
             total = mdb["feeds"].count_documents(query)
             skip = (page - 1) * page_size
 

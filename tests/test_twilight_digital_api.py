@@ -2,6 +2,7 @@ import unittest
 from copy import deepcopy
 from twilight_digital_api import create_app
 from datetime import datetime, timezone, timedelta
+import re
 
 # Simple in-memory mock of a Mongo-like API
 class _InsertOneResult:
@@ -39,37 +40,112 @@ class FakeCollection:
         return _InsertOneResult(_id)
 
     def find_one(self, filter_dict):
+        def _matches(doc, filt):
+            for k, v in filt.items():
+                if k == "$or":
+                    # v is a list of subfilters; any must match
+                    if not any(_matches(doc, sub) for sub in v):
+                        return False
+                    continue
+                if isinstance(v, dict):
+                    if "$gte" in v and "$lte" in v:
+                        # range
+                        dv = doc.get(k)
+                        if dv is None or dv < v["$gte"] or dv > v["$lte"]:
+                            return False
+                    elif "$regex" in v:
+                        pattern = v["$regex"]
+                        flags = 0
+                        if v.get("$options") and "i" in v.get("$options", ""):
+                            flags |= re.IGNORECASE
+                        if not re.search(pattern, str(doc.get(k, "")), flags):
+                            return False
+                    else:
+                        # direct dict equality fallback
+                        if doc.get(k) != v:
+                            return False
+                else:
+                    if doc.get(k) != v:
+                        return False
+            return True
+
         for d in self._docs_by_id.values():
-            ok = True
-            for k, v in filter_dict.items():
-                if d.get(k) != v:
-                    ok = False
-                    break
-            if ok:
+            if _matches(d, filter_dict):
                 return deepcopy(d)
         return None
 
-    def find(self, filter_dict=None, limit=None):
+    def find(self, filter_dict=None, projection=None, limit=None):
         filter_dict = filter_dict or {}
+
+        def _matches(doc, filt):
+            for k, v in filt.items():
+                if k == "$or":
+                    if not any(_matches(doc, sub) for sub in v):
+                        return False
+                    continue
+                if isinstance(v, dict):
+                    if "$gte" in v and "$lte" in v:
+                        dv = doc.get(k)
+                        if dv is None or dv < v["$gte"] or dv > v["$lte"]:
+                            return False
+                    elif "$regex" in v:
+                        pattern = v["$regex"]
+                        flags = 0
+                        if v.get("$options") and "i" in v.get("$options", ""):
+                            flags |= re.IGNORECASE
+                        if not re.search(pattern, str(doc.get(k, "")), flags):
+                            return False
+                    else:
+                        if doc.get(k) != v:
+                            return False
+                else:
+                    if doc.get(k) != v:
+                        return False
+            return True
+
         results = []
         for d in self._docs_by_id.values():
-            ok = True
-            for k, v in filter_dict.items():
-                if isinstance(v, dict) and '$gte' in v and '$lte' in v:
-                    if d.get(k) < v['$gte'] or d.get(k) > v['$lte']:
-                        ok = False
-                        break
-                else:
-                    if d.get(k) != v:
-                        ok = False
-                        break
-            if ok:
+            if _matches(d, filter_dict):
                 results.append(deepcopy(d))
-        if limit is not None:
-            results = results[:limit]
-        # Return an iterable consistent with PyMongo's cursor
-        for item in results:
-            yield item
+        # projection is ignored for now; tests don't rely on it
+
+        # Return a chainable cursor similar to PyMongo
+        return _FakeCursor(results, initial_limit=limit)
+
+    def count_documents(self, filter_dict=None):
+        filter_dict = filter_dict or {}
+
+        def _matches(doc, filt):
+            for k, v in filt.items():
+                if k == "$or":
+                    if not any(_matches(doc, sub) for sub in v):
+                        return False
+                    continue
+                if isinstance(v, dict):
+                    if "$gte" in v and "$lte" in v:
+                        dv = doc.get(k)
+                        if dv is None or dv < v["$gte"] or dv > v["$lte"]:
+                            return False
+                    elif "$regex" in v:
+                        pattern = v["$regex"]
+                        flags = 0
+                        if v.get("$options") and "i" in v.get("$options", ""):
+                            flags |= re.IGNORECASE
+                        if not re.search(pattern, str(doc.get(k, "")), flags):
+                            return False
+                    else:
+                        if doc.get(k) != v:
+                            return False
+                else:
+                    if doc.get(k) != v:
+                        return False
+            return True
+
+        count = 0
+        for d in self._docs_by_id.values():
+            if _matches(d, filter_dict):
+                count += 1
+        return count
 
     def update_one(self, filter_dict, update_dict):
         doc = self.find_one(filter_dict)
@@ -90,6 +166,40 @@ class FakeCollection:
         del self._docs_by_id[doc["_id"]]
         return _DeleteResult(1)
 
+class _FakeCursor:
+    def __init__(self, items, initial_limit=None):
+        # store a working copy
+        self._items = list(items)
+        self._skip = 0
+        self._limit = None if initial_limit is None else max(0, int(initial_limit))
+
+    def sort(self, keys):
+        # keys can be a list of (field, direction) pairs or a single tuple
+        if not keys:
+            return self
+        if isinstance(keys, tuple):
+            keys = [keys]
+        # Apply sorts in reverse order to mimic stable multi-key sort
+        for field, direction in reversed(list(keys)):
+            reverse = True if direction in (-1, "desc", "DESC") else False
+            self._items.sort(key=lambda d: d.get(field), reverse=reverse)
+        return self
+
+    def skip(self, n):
+        self._skip = max(0, int(n))
+        return self
+
+    def limit(self, n):
+        self._limit = max(0, int(n))
+        return self
+
+    def __iter__(self):
+        start = self._skip
+        end = None if self._limit is None else start + self._limit
+        # yield deep copies to mimic PyMongo behavior
+        for item in self._items[start:end]:
+            yield deepcopy(item)
+
 class FakeMongoDB:
     def __init__(self):
         self._collections = {}
@@ -106,6 +216,7 @@ class TestTwilightDigitalAPI(unittest.TestCase):
         fake_db = FakeMongoDB()
         test_app = create_app(mdb=fake_db)
         cls.client = test_app.test_client()
+        cls.db = fake_db
 
     def _crud_cycle(self, collection, create_payload, update_payload, id_field, invalid_enum=None):
         # Create
@@ -370,6 +481,52 @@ class TestTwilightDigitalAPI(unittest.TestCase):
         resp = self.client.get("/credential_configs/by_email/none@example.com")
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.get_json(), [])
+
+    def test_get_feeds_by_user_id_text_query_filters(self):
+        # Seed feeds
+        coll = self.db["feeds"]
+        # Matching titles/descriptions for user U1
+        coll.insert_one({
+            "_id": "f1", "field_id": "f1", "user_id": "U1", "event_id": "E1",
+            "date_time": "2025-01-01T00:00:00Z", "title": "Hello World", "description": "greeting",
+            "thumbnail_url": None, "content_url": None, "content_maturity": "G", "channel_title": "Ch", "channel_id": "C1"
+        })
+        coll.insert_one({
+            "_id": "f2", "field_id": "f2", "user_id": "U1", "event_id": "E2",
+            "date_time": "2025-01-02T00:00:00Z", "title": "Another", "description": "HELLO again",
+            "thumbnail_url": None, "content_url": None, "content_maturity": "G", "channel_title": "Ch", "channel_id": "C1"
+        })
+        # Non-matching for U1
+        coll.insert_one({
+            "_id": "f3", "field_id": "f3", "user_id": "U1", "event_id": "E3",
+            "date_time": "2025-01-03T00:00:00Z", "title": "Goodbye", "description": "farewell",
+            "thumbnail_url": None, "content_url": None, "content_maturity": "G", "channel_title": "Ch", "channel_id": "C1"
+        })
+        # Different user should not be included
+        coll.insert_one({
+            "_id": "f4", "field_id": "f4", "user_id": "U2", "event_id": "E4",
+            "date_time": "2025-01-04T00:00:00Z", "title": "Hello U2", "description": "not for U1",
+            "thumbnail_url": None, "content_url": None, "content_maturity": "G", "channel_title": "Ch", "channel_id": "C1"
+        })
+
+        resp = self.client.get("/feeds/by_user_id/U1?q=hello")
+        self.assertEqual(resp.status_code, 200)
+        body = resp.get_json()
+        self.assertIn("items", body)
+        titles = sorted([i.get("title") for i in body["items"]])
+        # Expect two matches (title contains 'Hello' and description contains 'HELLO' case-insensitively)
+        self.assertEqual(titles, ["Another", "Hello World"])
+        # Total should reflect filtered count
+        self.assertEqual(body.get("total"), 2)
+
+    def test_get_feeds_by_user_id_text_query_too_long_invalid(self):
+        # q longer than 200 chars should be rejected
+        long_q = "a" * 201
+        resp = self.client.get(f"/feeds/by_user_id/U1?q={long_q}")
+        self.assertEqual(resp.status_code, 400)
+        body = resp.get_json()
+        self.assertIn("too long", (body.get("error") or "").lower())
+
 
 class AuditLogsRouteTests(unittest.TestCase):
     def setUp(self):

@@ -649,6 +649,146 @@ class TestSignOut(unittest.TestCase):
         # Session remains empty
         with self.client.session_transaction() as sess:
             self.assertEqual(dict(sess), {})
+class TestUserDataApiRoutes(unittest.TestCase):
+    def setUp(self):
+        app.app.testing = True
+        self.client = app.app.test_client()
+        self._orig_base_url = app.base_url
+
+    def tearDown(self):
+        # restore original base_url
+        app.base_url = self._orig_base_url
+
+    def _seed_user(self, user_id="U123", as_current=True):
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = user_id
+            if as_current:
+                sess["current_user"] = user_id
+
+    # Unauthorized (no user in session)
+    def test_feed_unauthorized(self):
+        resp = self.client.get("/api/user/feed")
+        self.assertEqual(resp.status_code, 401)
+        self.assertFalse(resp.get_json().get("ok"))
+
+    def test_channels_unauthorized(self):
+        resp = self.client.get("/api/user/channels")
+        self.assertEqual(resp.status_code, 401)
+        self.assertFalse(resp.get_json().get("ok"))
+
+    def test_subscriptions_unauthorized(self):
+        resp = self.client.get("/api/user/subscriptions")
+        self.assertEqual(resp.status_code, 401)
+        self.assertFalse(resp.get_json().get("ok"))
+
+    # Service not configured
+    def test_feed_service_not_configured(self):
+        self._seed_user()
+        app.base_url = ""  # simulate missing configuration
+        resp = self.client.get("/api/user/feed")
+        self.assertEqual(resp.status_code, 503)
+        self.assertFalse(resp.get_json().get("ok"))
+
+    def test_channels_service_not_configured(self):
+        self._seed_user()
+        app.base_url = ""
+        resp = self.client.get("/api/user/channels")
+        self.assertEqual(resp.status_code, 503)
+        self.assertFalse(resp.get_json().get("ok"))
+
+    def test_subscriptions_service_not_configured(self):
+        self._seed_user()
+        app.base_url = ""
+        resp = self.client.get("/api/user/subscriptions")
+        self.assertEqual(resp.status_code, 503)
+        self.assertFalse(resp.get_json().get("ok"))
+
+    # Happy path
+    def test_feed_ok(self):
+        self._seed_user()
+        app.base_url = "http://api.local"
+        items = [{"id": "f1", "title": "Hello"}]
+        with patch.object(app, "_http_json", return_value=(200, items)) as mock_http:
+            resp = self.client.get("/api/user/feed")
+            self.assertEqual(resp.status_code, 200)
+            data = resp.get_json()
+            self.assertTrue(data.get("ok"))
+            self.assertEqual(data.get("items"), items)
+            self.assertTrue(mock_http.called)
+
+    def test_channels_ok(self):
+        self._seed_user()
+        app.base_url = "http://api.local"
+        items = [{"id": "c1", "title": "My Channel"}]
+        with patch.object(app, "_http_json", return_value=(200, items)) as mock_http:
+            resp = self.client.get("/api/user/channels")
+            self.assertEqual(resp.status_code, 200)
+            data = resp.get_json()
+            self.assertTrue(data.get("ok"))
+            self.assertEqual(data.get("items"), items)
+            self.assertTrue(mock_http.called)
+
+    def test_subscriptions_ok(self):
+        self._seed_user()
+        app.base_url = "http://api.local"
+        items = [{"id": "s1", "channel": {"id": "c1", "title": "Followed"}}]
+        with patch.object(app, "_http_json", return_value=(200, items)) as mock_http:
+            resp = self.client.get("/api/user/subscriptions")
+            self.assertEqual(resp.status_code, 200)
+            data = resp.get_json()
+            self.assertTrue(data.get("ok"))
+            self.assertEqual(data.get("items"), items)
+            self.assertTrue(mock_http.called)
+
+    # Downstream API error status
+    def test_feed_api_error_status(self):
+        self._seed_user()
+        app.base_url = "http://api.local"
+        with patch.object(app, "_http_json", return_value=(500, {"error": "boom"})):
+            resp = self.client.get("/api/user/feed")
+            self.assertEqual(resp.status_code, 502)
+            self.assertFalse(resp.get_json().get("ok"))
+
+    def test_channels_api_error_status(self):
+        self._seed_user()
+        app.base_url = "http://api.local"
+        with patch.object(app, "_http_json", return_value=(404, {"error": "not found"})):
+            resp = self.client.get("/api/user/channels")
+            self.assertEqual(resp.status_code, 502)
+            self.assertFalse(resp.get_json().get("ok"))
+
+    def test_subscriptions_api_error_status(self):
+        self._seed_user()
+        app.base_url = "http://api.local"
+        with patch.object(app, "_http_json", return_value=(503, {"error": "unavailable"})):
+            resp = self.client.get("/api/user/subscriptions")
+            self.assertEqual(resp.status_code, 502)
+            self.assertFalse(resp.get_json().get("ok"))
+
+    # Downstream API exception
+    def test_feed_api_exception(self):
+        self._seed_user()
+        app.base_url = "http://api.local"
+        with patch.object(app, "_http_json", side_effect=RuntimeError("network")):
+            resp = self.client.get("/api/user/feed")
+            self.assertEqual(resp.status_code, 500)
+            self.assertFalse(resp.get_json().get("ok"))
+
+    def test_channels_api_exception(self):
+        self._seed_user()
+        app.base_url = "http://api.local"
+        with patch.object(app, "_http_json", side_effect=RuntimeError("network")):
+            resp = self.client.get("/api/user/channels")
+            self.assertEqual(resp.status_code, 500)
+            self.assertFalse(resp.get_json().get("ok"))
+
+    def test_subscriptions_api_exception(self):
+        self._seed_user()
+        app.base_url = "http://api.local"
+        with patch.object(app, "_http_json", side_effect=RuntimeError("network")):
+            resp = self.client.get("/api/user/subscriptions")
+            self.assertEqual(resp.status_code, 500)
+            self.assertFalse(resp.get_json().get("ok"))
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
