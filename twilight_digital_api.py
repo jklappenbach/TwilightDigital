@@ -158,7 +158,12 @@ def create_app(mdb=None):
     except Exception:
         pass
     try:
-        mdb["feeds"].create_index([("user_id", ASCENDING)], unique=False)
+        mdb["feeds"].create_index([
+            ("user_id", ASCENDING),
+            ("date_time", DESCENDING),
+            ("title", "text"),
+            ("channel_title", "text"),
+            ("description", "text")], unique=False)
     except Exception:
         pass
     try:
@@ -760,10 +765,9 @@ def create_app(mdb=None):
         query = {"user_id": user_id}
         if q:
             # Case-insensitive contains on title or description
-            query["$or"] = [
-                {"title": {"$regex": q, "$options": "i"}},
-                {"description": {"$regex": q, "$options": "i"}},
-            ]
+            query["$or"] = [{"title": {"$regex": q, "$options": "i"}},
+                            {"channel_title": {"$regex": q, "$options": "i"}},
+                            {"description": {"$regex": q, "$options": "i"}}]
 
         # Optional projection to trim payload if needed
         projection = None

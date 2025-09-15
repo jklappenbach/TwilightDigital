@@ -200,13 +200,19 @@
                                         <span class="arrow" data-key="selected" aria-hidden="true">↕</span>
                                     </button>
                                 </th>
-                                <th id="th-date" scope="col" style="width:200px; padding:8px 4px;">
+                                <th id="th-date" scope="col" style="width:150px; padding:8px 4px;">
                                     <button id="sortDateBtn" class="sort-btn" type="button" aria-label="Sort by date" style="display:flex; align-items:center; gap:4px; width:100%; background:none; border:none; cursor:pointer; color:inherit; font-size:inherit;">
                                         <span>Date</span>
                                         <span class="arrow" data-key="date" aria-hidden="true" style="font-size:10px;">↕</span>
                                     </button>
                                 </th>
-                                <th id="th-item" scope="col" style="width:300px; padding:8px 4px;">
+                                <th id="th-channel" scope="col" style="width:300px; padding:8px 4px;">
+                                    <button id="sortItemBtn" class="sort-btn" type="button" aria-label="Sort by channel" style="display:flex; align-items:center; gap:4px; width:100%; background:none; border:none; cursor:pointer; color:inherit; font-size:inherit;">
+                                        <span>Channel</span>
+                                        <span class="arrow" data-key="item" aria-hidden="true" style="font-size:10px;">↕</span>
+                                    </button>
+                                </th>
+                                <th id="th-item" scope="col" style="width:200px; padding:8px 4px;">
                                     <button id="sortItemBtn" class="sort-btn" type="button" aria-label="Sort by title" style="display:flex; align-items:center; gap:4px; width:100%; background:none; border:none; cursor:pointer; color:inherit; font-size:inherit;">
                                         <span>Title</span>
                                         <span class="arrow" data-key="item" aria-hidden="true" style="font-size:10px;">↕</span>
@@ -366,6 +372,7 @@
                 const url = item.content_url || item.url || item.link || (`/events/${item.event_id || ''}`);
                 const title = safeText(item.title || item.name || `Untitled ${idx + 1}`);
                 const rawDesc = safeText(item.body || item.description || '');
+                const channel = safeText(item.channel_name || item.creator_screen_name || item.username);
                 const desc = rawDesc.length > 100 ? rawDesc.slice(0, 100) : rawDesc;
                 const thumb = item.thumbnail_url || item.thumbnail || item.thumb_url || '';
                 const idval = item.feed_id || item.field_id || item.id || item.event_id || item.record_id || (`row-${idx}`);
@@ -382,6 +389,13 @@
                     ]),
                     el('td', { class: 'date-cell', style: 'padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;' }, [
                         document.createTextNode(dt)
+                    ]),
+                    el('td', { class: 'channel-cell', style: 'padding:4px; vertical-align:middle;' }, [
+                        el('a', { href: url }, [
+                            el('div', { style: 'display:flex; align-items:center; gap:8px; min-width:0;' }, [
+                                el('div', { class: 'channel', style: 'white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;', text: channel })
+                            ])
+                        ])
                     ]),
                     el('td', { class: 'title-cell', style: 'padding:4px; vertical-align:middle;' }, [
                         el('a', { href: url }, [
