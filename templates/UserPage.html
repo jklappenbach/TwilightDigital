@@ -149,9 +149,9 @@
         </div>
         <div id="pane-feed" class="tab-panel" role="tabpanel" aria-labelledby="tab-feed" aria-hidden="false">
                         <div class="card">
-                <div class="panel-header" style="display:flex; gap:10px; align-items:center; flex-wrap:nowrap;">
-                    <div class="filter-wrap" style="display:flex; gap:8px; align-items:center;">
-                        <button id="applyFilterBtn" class="icon-btn" title="Apply filter" aria-label="Apply filter">
+                <div class="panel-header">
+                    <div class="filter-wrap">
+                        <button id="applyFilterBtn" class="icon-btn" title="{{ _('Apply filter') }}" aria-label="{{ _('Apply filter') }}">
                             <span class="icon" aria-hidden="true">
                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                                 <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
@@ -160,25 +160,25 @@
                             </span>
                         </button>
                         <input id="filterText" class="filter-input" type="text"
-                               placeholder="Filter feed by title or description..."/>
+                               placeholder="{{ _('Filter feed by title or description...') }}"/>
                     </div>
-                    <div class="toolbar" style="display:flex; gap:8px; align-items:center; margin-left:auto;">
-                        <button id="prevBtn" class="icon-btn" title="Previous page" aria-label="Previous page">
+                    <div class="toolbar">
+                        <button id="prevBtn" class="icon-btn" title="{{ _('Previous page') }}" aria-label="{{ _('Previous page') }}">
                             <span class="icon" aria-hidden="true">
                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                                 <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                               </svg>
                             </span>
                         </button>
-                        <input id="pageCurrent" class="page-field" type="number" min="1" value="1" aria-label="Current page" readonly style="width:4rem; text-align:center; height:32px; line-height:32px; border-radius:6px;"/>
-                        <button id="nextBtn" class="icon-btn" title="Next page" aria-label="Next page">
+                        <input id="pageCurrent" class="page-field" type="number" min="1" value="1" aria-label="{{ _('Current page') }}" readonly/>
+                        <button id="nextBtn" class="icon-btn" title="{{ _('Next page') }}" aria-label="{{ _('Next page') }}">
                             <span class="icon" aria-hidden="true">
                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                                 <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                               </svg>
                             </span>
                         </button>
-                        <button id="deleteBtn" class="icon-btn" title="Delete selected" aria-label="Delete selected">
+                        <button id="deleteBtn" class="icon-btn" title="{{ _('Delete selected') }}" aria-label="{{ _('Delete selected') }}">
                             <span class="icon" aria-hidden="true">
                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                                 <path d="M3 6h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -190,40 +190,40 @@
                         </button>
                     </div>
                 </div>
-                <div class="feed-list" id="feedList" style="padding:0; margin:0; max-height:60vh; overflow:auto;">
-                    <table id="feedTable" class="feed-table" role="grid" aria-label="Feed items" style="width:100%; table-layout:fixed;">
+                <div class="feed-list" id="feedList">
+                    <table id="feedTable" class="feed-table" role="grid" aria-label="{{ _('Feed items') }}">
                         <thead>
-                            <tr style="background-color:rgba(255,255,255,0.05); border-bottom:1px solid rgba(255,255,255,0.1);">
-                                <th id="th-select" scope="col" style="width:50px; text-align:center; padding:8px 4px;">
-                                    <input type="checkbox" id="headerSelectAll" aria-label="Toggle select all on current page" style="vertical-align:middle;"/>
+                            <tr>
+                                <th id="th-select" scope="col">
+                                    <input type="checkbox" id="headerSelectAll" aria-label="{{ _('Toggle select all on current page') }}"/>
                                 </th>
-                                <th id="th-date" scope="col" style="width:150px; padding:8px 4px;">
-                                    <button id="sortDateBtn" class="sort-btn" type="button" aria-label="Sort by date" style="display:flex; align-items:center; gap:4px; width:100%; background:none; border:none; cursor:pointer; color:inherit; font-size:inherit;">
-                                        <span>Date</span>
-                                        <span class="arrow" data-key="date" aria-hidden="true" style="font-size:10px;">↕</span>
+                               <th id="th-item" scope="col">
+                                    <button id="sortItemBtn" class="sort-btn" type="button" aria-label="{{ _('Sort by title') }}">
+                                        <span>{{ _('Title') }}</span>
+                                        <span class="arrow" data-key="item" aria-hidden="true">↕</span>
                                     </button>
                                 </th>
-                                <th id="th-channel" scope="col" style="width:300px; padding:8px 4px;">
-                                    <button id="sortItemBtn" class="sort-btn" type="button" aria-label="Sort by channel" style="display:flex; align-items:center; gap:4px; width:100%; background:none; border:none; cursor:pointer; color:inherit; font-size:inherit;">
-                                        <span>Channel</span>
-                                        <span class="arrow" data-key="item" aria-hidden="true" style="font-size:10px;">↕</span>
+                                <th id="th-desc" scope="col">{{ _('Description') }}</th>
+                                <th id="th-channel" scope="col">
+                                    <button id="sortItemBtn" class="sort-btn" type="button" aria-label="{{ _('Sort by channel') }}">
+                                        <span>{{ _('Channel') }}</span>
+                                        <span class="arrow" data-key="item" aria-hidden="true">↕</span>
                                     </button>
                                 </th>
-                                <th id="th-item" scope="col" style="width:200px; padding:8px 4px;">
-                                    <button id="sortItemBtn" class="sort-btn" type="button" aria-label="Sort by title" style="display:flex; align-items:center; gap:4px; width:100%; background:none; border:none; cursor:pointer; color:inherit; font-size:inherit;">
-                                        <span>Title</span>
-                                        <span class="arrow" data-key="item" aria-hidden="true" style="font-size:10px;">↕</span>
+                                <th id="th-date" scope="col">
+                                    <button id="sortDateBtn" class="sort-btn" type="button" aria-label="{{ _('Sort by date') }}">
+                                        <span>{{ _('Date') }}</span>
+                                        <span class="arrow" data-key="date" aria-hidden="true">↕</span>
                                     </button>
                                 </th>
-                                <th scope="col" style="padding:8px 4px;">Description</th>
                             </tr>
                         </thead>
                         <tbody id="feedTbody">
-                            <!-- Feed rows rendered dynamically -->
+                            <!-- {{ _('Feed rows rendered dynamically') }} -->
                         </tbody>
                     </table>
                 </div>
-               <div class="panel-footer">
+                <div class="panel-footer">
                     <span id="pageInfo" class="muted"></span>
                 </div>
             </div>
@@ -336,6 +336,14 @@
             return v == null ? fallback : String(v);
         }
 
+        function formatDateLabel(s) {
+            const d = new Date(s);
+            if (isNaN(d)) return s || '';
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            // Use UTC to avoid local timezone shifting dates if server returns Z/UTC
+            return `${months[d.getUTCMonth()]} ${d.getUTCDate()}`;
+        }
+
         // Render channels (subscriptions/creators)
         function renderChannels(listEl, items) {
             listEl.innerHTML = '';
@@ -359,8 +367,7 @@
                 );
             });
         }
-
-        // Render feed items
+        // ... existing code ...
         function renderFeed(items) {
             feedTbody.innerHTML = '';
             if (!Array.isArray(items)) return;
@@ -369,30 +376,20 @@
                 const url = item.content_url || item.url || item.link || (`/events/${item.event_id || ''}`);
                 const title = safeText(item.title || item.name || `Untitled ${idx + 1}`);
                 const rawDesc = safeText(item.body || item.description || '');
-                const channel = safeText(item.channel_title);
+                const channel = safeText(item.channel_title || '');
                 const desc = rawDesc.length > 100 ? rawDesc.slice(0, 100) : rawDesc;
-                const thumb = item.thumbnail_url || item.thumbnail || item.thumb_url || '';
-                const idval = item.feed_id || item.field_id || item.id || item.event_id || item.record_id || (`row-${idx}`);
-                const dt = safeText(item.date_time || item.datetime || item.date || '');
+                const thumb = item.thumbnail_url || '';
+                const idval = item.feed_id;
+                const dtRaw = safeText(item.date_time || item.datetime || item.date || '');
                 const viewed = item.viewed != null ? String(item.viewed) : '';
 
                 const tr = el('tr', {
                     class: 'feed-item',
-                    dataset: { id: idval, title: title, desc: desc, date: dt, viewed: viewed },
+                    dataset: { id: idval, title: title, desc: desc, date: dtRaw, viewed: viewed },
                     style: 'height:48px; border-bottom:1px solid rgba(255,255,255,0.05);'
                 }, [
                     el('td', { class: 'checkbox-cell', style: 'text-align:center; padding:4px; vertical-align:middle;' }, [
                         el('input', { type: 'checkbox', class: 'select-box' })
-                    ]),
-                    el('td', { class: 'date-cell', style: 'padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;' }, [
-                        document.createTextNode(dt)
-                    ]),
-                    el('td', { class: 'channel-cell', style: 'padding:4px; vertical-align:middle;' }, [
-                        el('a', { href: url }, [
-                            el('div', { style: 'display:flex; align-items:center; gap:8px; min-width:0;' }, [
-                                el('div', { class: 'channel', style: 'white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;', text: channel })
-                            ])
-                        ])
                     ]),
                     el('td', { class: 'title-cell', style: 'padding:4px; vertical-align:middle;' }, [
                         el('a', { href: url }, [
@@ -404,7 +401,17 @@
                     ]),
                     el('td', { class: 'desc-cell', style: 'padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);' }, [
                         document.createTextNode(desc)
-                    ])
+                    ]),
+                    el('td', { class: 'channel-cell', style: 'padding:4px; vertical-align:middle;' }, [
+                        el('a', { href: url }, [
+                            el('div', { style: 'display:flex; align-items:center; gap:8px; min-width:0;' }, [
+                                el('div', { class: 'channel', style: 'white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;', text: channel })
+                            ])
+                        ])
+                    ]),
+                    el('td', { class: 'date-cell', style: 'padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;' }, [
+                        document.createTextNode(formatDateLabel(dtRaw))
+                    ]),
                 ]);
 
                 // Stop click on checkbox from bubbling

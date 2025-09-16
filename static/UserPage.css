@@ -50,6 +50,15 @@ html, body {
   padding: 12px;
 }
 
+/* Page field (moved from inline styles) */
+.page-field {
+  width: 4rem;
+  text-align: center;
+  height: 32px;
+  line-height: 32px;
+  border-radius: 6px;
+}
+
 /* Cards and utility styles referenced by UserPage */
 .card {
   background: var(--card-bg);
@@ -307,7 +316,7 @@ html, body {
 .tab-panel[aria-hidden="false"] {
     display: block;
 }
-/* Icon buttons styling for dark mode */
+/* Icon buttons already styled; ensure hover/active is consistent */
 .icon-btn {
   background: rgba(255,255,255,0.1);
   border: 1px solid rgba(255,255,255,0.3);
@@ -316,7 +325,6 @@ html, body {
   padding: 6px;
   cursor: pointer;
 }
-
 .icon-btn:hover {
   background: rgba(255,255,255,0.2);
   border-color: rgba(255,255,255,0.5);
@@ -362,19 +370,98 @@ html, body {
   white-space: nowrap;
 }
 
-/* Make the scroll container only wrap the body area (header stays visible) */
-#feedList {
-  max-height: 60vh;
-  overflow: auto; /* vertical scrollbar appears here */
+.feed-table thead tr {
+  background-color: rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
+#headerSelectAll {
+  vertical-align: middle;
+}
+
+.panel-header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+.toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: auto;
+}
+
+/* Feed list container (moved from inline styles) */
+#feedList {
+  padding: 0;
+  margin: 0;
+  max-height: 60vh;
+  overflow: auto;
+}
 /* Optional: ensure header controls remain clickable and visually consistent */
 .sort-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
   background: none;
   border: none;
-  color: inherit;
   cursor: pointer;
+  color: inherit;
+  font-size: inherit;
+  padding: 0;
 }
+/* Column sizing and padding */
+#th-select {
+  width: 50px;
+  text-align: center;
+  padding: 8px 4px;
+  white-space: nowrap;
+}
+#th-date {
+  width: 75px;
+  padding: 8px 4px;
+}
+#th-channel {
+  width: 250px;
+  padding: 8px 4px;
+}
+#th-item {
+  width: 200px;
+  padding: 8px 4px;
+}
+
+.feed-table th[scope="col"] {
+  padding: 8px 4px;
+}
+
+/* Sticky header */
+.feed-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: saturate(120%) blur(2px);
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,0.12);
+}
+
+/* Cells overflow handling */
+.feed-table th, .feed-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.feed-table a {
+  text-decoration: none;
+  color: inherit;
+}
+
+#th-select .sort-btn {
+  width: auto;
+  margin-left: 2px;
+}
+
 
 /* Utility */
 .hidden {
