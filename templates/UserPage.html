@@ -191,14 +191,11 @@
                     </div>
                 </div>
                 <div class="feed-list" id="feedList" style="padding:0; margin:0; max-height:60vh; overflow:auto;">
-                    <table id="feedTable" class="feed-table" role="grid" aria-label="Feed items" style="width:100%; border-collapse:collapse; table-layout:fixed;">
+                    <table id="feedTable" class="feed-table" role="grid" aria-label="Feed items" style="width:100%; table-layout:fixed;">
                         <thead>
                             <tr style="background-color:rgba(255,255,255,0.05); border-bottom:1px solid rgba(255,255,255,0.1);">
                                 <th id="th-select" scope="col" style="width:50px; text-align:center; padding:8px 4px;">
                                     <input type="checkbox" id="headerSelectAll" aria-label="Toggle select all on current page" style="vertical-align:middle;"/>
-                                    <button id="sortSelectedBtn" class="sort-btn" type="button" aria-label="Sort by selection" style="margin-left:2px; background:none; border:none; cursor:pointer; padding:0; width:12px; line-height:1; font-size:10px;">
-                                        <span class="arrow" data-key="selected" aria-hidden="true">↕</span>
-                                    </button>
                                 </th>
                                 <th id="th-date" scope="col" style="width:150px; padding:8px 4px;">
                                     <button id="sortDateBtn" class="sort-btn" type="button" aria-label="Sort by date" style="display:flex; align-items:center; gap:4px; width:100%; background:none; border:none; cursor:pointer; color:inherit; font-size:inherit;">
@@ -226,7 +223,7 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="panel-footer">
+               <div class="panel-footer">
                     <span id="pageInfo" class="muted"></span>
                 </div>
             </div>
@@ -372,7 +369,7 @@
                 const url = item.content_url || item.url || item.link || (`/events/${item.event_id || ''}`);
                 const title = safeText(item.title || item.name || `Untitled ${idx + 1}`);
                 const rawDesc = safeText(item.body || item.description || '');
-                const channel = safeText(item.channel_name || item.creator_screen_name || item.username);
+                const channel = safeText(item.channel_title);
                 const desc = rawDesc.length > 100 ? rawDesc.slice(0, 100) : rawDesc;
                 const thumb = item.thumbnail_url || item.thumbnail || item.thumb_url || '';
                 const idval = item.feed_id || item.field_id || item.id || item.event_id || item.record_id || (`row-${idx}`);
@@ -419,9 +416,9 @@
         async function loadAll() {
             try {
                 const [feedRes, channelsRes, subsRes] = await Promise.all([
-                    fetchWithSession('{{ url_for("api_user_feed") }}'),
-                    fetchWithSession('{{ url_for("api_user_channels") }}'),
-                    fetchWithSession('{{ url_for("api_user_subscriptions") }}')
+                    fetchWithSession('{{ url_for("user_feed") }}'),
+                    fetchWithSession('{{ url_for("user_channels") }}'),
+                    fetchWithSession('{{ url_for("user_subscriptions") }}')
                 ]);
 
                 const [feedJson, channelsJson, subsJson] = await Promise.all([

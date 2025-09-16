@@ -329,27 +329,32 @@ def verify_email_code():
     created_user_id = None
     if base_url:
         try:
-            screen_name = email.split('@', 1)[0] or 'subscriber'
-            user_payload = {
-                "email": email,
-                "screen_name": screen_name,
-                "role": "Subscriber",
-                "content_maturity": "G"
-            }
-            status, user_resp = _http_json("POST", f"{base_url}/users", email, user_payload)
-            if status == 201 and isinstance(user_resp, dict):
-                created_user_id = user_resp.get("user_id")
-                session['user_id'] = created_user_id
-                # Save email as a contact for the user
-                if created_user_id:
-                    contact_payload = {
-                        "user_id": created_user_id,
-                        "contact_type": "Email_Address",
-                        "data": email,
-                    }
-                    _http_json("POST", f"{base_url}/contacts", created_user_id, contact_payload)
+            # First, see if the user is already in the database.  If so, this is a login attempt
+            status, user_resp = _http_json("GET", f"{base_url}/users/by_email/" + email)
+            if status == 200 and user_resp.get('user_id'):
+                session['current_user'] = user_resp.get('user_id')
             else:
-                app.logger.error(f"Failed to create user via Twilight Digital API: HTTP {status} {user_resp}")
+                screen_name = email.split('@', 1)[0] or 'subscriber'
+                user_payload = {
+                    "email": email,
+                    "screen_name": screen_name,
+                    "role": "Subscriber",
+                    "content_maturity": "G"
+                }
+                status, user_resp = _http_json("POST", f"{base_url}/users", email, user_payload)
+                if status == 201 and isinstance(user_resp, dict):
+                    created_user_id = user_resp.get("user_id")
+                    session['user_id'] = created_user_id
+                    # Save email as a contact for the user
+                    if created_user_id:
+                        contact_payload = {
+                            "user_id": created_user_id,
+                            "contact_type": "Email_Address",
+                            "data": email,
+                        }
+                        _http_json("POST", f"{base_url}/contacts", created_user_id, contact_payload)
+                else:
+                    app.logger.error(f"Failed to create user via Twilight Digital API: HTTP {status} {user_resp}")
         except Exception as ex:
             app.logger.exception(f"Twilight Digital API user creation error: {ex}")
     else:
@@ -564,6 +569,7 @@ def verify_otp_code():
                     for item in resp:
                         try:
                             credential_config = item
+                            user_id = credential_config.get("user_id")
                             if (credential_config or {}).get("credential_type") == "Authenticator_2FA":
                                 enc = (credential_config or {}).get("encrypted_credential") or ""
                                 decrypted = _aes256_decrypt_from_b64(enc, enc_secret_key)
@@ -628,8 +634,8 @@ def user_page():
 
     return render_template("UserPage.html", sid=session.sid)
 
-@app.route('/api/user/feed', methods=['GET'])
-def api_user_feed():
+@app.route('/user-feed', methods=['GET'])
+def user_feed():
     user_id = session.get("current_user") or session.get("user_id")
     if not user_id:
         return jsonify(ok=False, error="Unauthorized"), 401
@@ -637,16 +643,16 @@ def api_user_feed():
         return jsonify(ok=False, error="Service not configured"), 503
     try:
         status, resp = _http_json("GET", f"{base_url}/feeds/by_user_id/{user_id}")
-        if status == 200 and isinstance(resp, list):
-            return jsonify(ok=True, items=resp)
+        if status == 200 and isinstance(resp.get('items'), list):
+            return jsonify(ok=True, items=resp.get('items'))
         app.logger.error(f"/api/user/feed: HTTP {status} {resp}")
         return jsonify(ok=False, error="Failed to load feed"), 502
     except Exception as ex:
         app.logger.exception(f"/api/user/feed: exception: {ex}")
         return jsonify(ok=False, error="Internal error"), 500
 
-@app.route('/api/user/channels', methods=['GET'])
-def api_user_channels():
+@app.route('/user-channels', methods=['GET'])
+def user_channels():
     user_id = session.get("current_user") or session.get("user_id")
     if not user_id:
         return jsonify(ok=False, error="Unauthorized"), 401
@@ -662,8 +668,8 @@ def api_user_channels():
         app.logger.exception(f"/api/user/channels: exception: {ex}")
         return jsonify(ok=False, error="Internal error"), 500
 
-@app.route('/api/user/subscriptions', methods=['GET'])
-def api_user_subscriptions():
+@app.route('/user-subscriptions', methods=['GET'])
+def user_subscriptions():
     user_id = session.get("current_user") or session.get("user_id")
     if not user_id:
         return jsonify(ok=False, error="Unauthorized"), 401

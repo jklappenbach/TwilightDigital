@@ -83,7 +83,7 @@ def create_app(mdb=None):
         # the feed for each user, where event IDs will be stored as records.
         # These records track whether they've been viewed, and can be deleted.
         # We've set this up this way so that a user could have multiple feeds.
-        "feed": {
+        "feeds": {
             "id_field": "field_id",
             "enums": {},
             "required": ["event_id", "user_id", "date_time", "title", "body", "thumbnail_url", "content_url",
@@ -167,7 +167,7 @@ def create_app(mdb=None):
     except Exception:
         pass
     try:
-        mdb["audit_log"].create_index([("user_id", ASCENDING), ("date_time", ASCENDING)], unique=False)
+        mdb["audit_logs"].create_index([("user_id", ASCENDING), ("record_id", ASCENDING), ("date_time", ASCENDING)], unique=False)
     except Exception:
         pass
 
@@ -764,10 +764,8 @@ def create_app(mdb=None):
 
         query = {"user_id": user_id}
         if q:
-            # Case-insensitive contains on title or description
-            query["$or"] = [{"title": {"$regex": q, "$options": "i"}},
-                            {"channel_title": {"$regex": q, "$options": "i"}},
-                            {"description": {"$regex": q, "$options": "i"}}]
+            # Use MongoDB text search to leverage text indexes over title/channel_title/description
+            query["$text"] = {"$search": q}
 
         # Optional projection to trim payload if needed
         projection = None

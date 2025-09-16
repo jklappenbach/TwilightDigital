@@ -8,7 +8,7 @@ import requests
 
 BASE_URL = os.getenv("TWILIGHT_DIGITAL_API_BASE_URL", "http://localhost:8080").rstrip("/")
 DEFAULT_USER_EMAIL = "jklappenbach@gmail.com"
-DEFAULT_USER_ID = "360698fc-1827-4658-b4cf-ea2d8ead13ee"
+DEFAULT_USER_ID = "d649735f-40a2-422e-9c51-666e4c4333b7"
 
 # How many to create
 NUM_CREATORS = 10
@@ -118,7 +118,7 @@ def create_feed_record(user_id, channel, event):
         "channel_id": channel["channel_id"],
         "viewed": "false",
     }
-    return post("/feed", payload, expect_status=(201,))
+    return post("/feeds", payload, expect_status=(201,))
 
 def main():
     random.seed()  # system entropy
@@ -134,18 +134,51 @@ def main():
 
     print(f"Using API base URL: {BASE_URL}")
 
+    # Timing helpers
+    def _extract_id(obj):
+        # Try to find any *_id field to display
+        if isinstance(obj, dict):
+            for k in obj.keys():
+                if k.endswith("_id"):
+                    return obj[k]
+        return None
+
+    timings = {
+        "users": 0.0,
+        "channels": 0.0,
+        "subscription_tiers": 0.0,
+        "subscriptions": 0.0,
+        "events": 0.0,
+        "feeds": 0.0,
+    }
+
+    def time_call(key, label, func, *args, **kwargs):
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        dur = time.perf_counter() - start
+        timings[key] += dur
+        ent_id = _extract_id(result)
+        if ent_id:
+            print(f"{label} ({ent_id}) created in {dur:.3f}s")
+        else:
+            print(f"{label} created in {dur:.3f}s")
+        return result
+
+    total_start = time.perf_counter()
+
     # 1) Create creators (users)
     for i in range(NUM_CREATORS):
-        u = create_user(i)
+        u = time_call("users", "User", create_user, i)
         created["users"].append(u)
         if (i + 1) % 10 == 0:
             print(f"Created users: {i+1}/{NUM_CREATORS}")
 
+
     # 2) Create one channel per user + 1 subscription tier per channel
     for i, u in enumerate(created["users"]):
-        ch = create_channel_for_user(u, i)
+        ch = time_call("channels", "Channel", create_channel_for_user, u, i)
         created["channels"].append(ch)
-        tier = create_subscription_tier(ch, i)
+        tier = time_call("subscription_tiers", "SubscriptionTier", create_subscription_tier, ch, i)
         created["subscription_tiers"].append({
             "channel_id": ch["channel_id"],
             "subscription_tier_id": tier["subscription_tier_id"],
@@ -159,7 +192,14 @@ def main():
     # 3) Subscribe default user to 12 random distinct channels
     chosen_channels = random.sample(created["channels"], k=min(DEFAULT_USER_SUBS, len(created["channels"])))
     for ch in chosen_channels:
-        sub = create_subscription(DEFAULT_USER_ID, ch["channel_id"], tier_by_channel[ch["channel_id"]])
+        sub = time_call(
+            "subscriptions",
+            "Subscription",
+            create_subscription,
+            DEFAULT_USER_ID,
+            ch["channel_id"],
+            tier_by_channel[ch["channel_id"]],
+        )
         created["subscriptions_for_default_user"].append(sub)
     print(f"Created {len(created['subscriptions_for_default_user'])} subscriptions for default user")
 
@@ -172,10 +212,10 @@ def main():
         ch_id = ch["channel_id"]
         created["events_by_channel"][ch_id] = []
         for ev_i in range(1, EVENTS_PER_CHANNEL + 1):
-            ev = create_event(ch, ev_i)
+            ev = time_call("events", "Event", create_event, ch, ev_i)
             created["events_by_channel"][ch_id].append(ev["event_id"])
             if ch_id in subscribed_channel_ids:
-                fr = create_feed_record(DEFAULT_USER_ID, ch, ev)
+                fr = time_call("feeds", "FeedRecord", create_feed_record, DEFAULT_USER_ID, ch, ev)
                 created["feeds_for_default_user"].append(fr["field_id"] if "field_id" in fr else ev["event_id"])
         if idx % 5 == 0 or idx == total_channels:
             print(f"Created events for channels: {idx}/{total_channels}")
@@ -184,6 +224,14 @@ def main():
     out_path = "seed_output.json"
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(created, f, indent=2)
+    # Print per-entity-type timing summary
+    print("Timing summary per entity type (seconds):")
+    for key, total_sec in timings.items():
+        print(f"  {key}: {total_sec:.3f}s")
+
+    total_elapsed = time.perf_counter() - total_start
+    print(f"Total seeding time: {total_elapsed:.3f}s")
+
     print(f"Done. Wrote IDs and mappings to {out_path}")
     print(f"Summary: users={len(created['users'])}, channels={len(created['channels'])}, "
           f"subs={len(created['subscriptions_for_default_user'])}, "
