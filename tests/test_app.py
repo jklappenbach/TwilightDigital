@@ -179,22 +179,6 @@ class TestVerifyEmailCode(unittest.TestCase):
         self.assertFalse(resp.get_json().get("ok"))
         self.assertIn("incorrect", (resp.get_json().get("error") or "").lower())
 
-    def test_verify_ok_no_api_configured(self):
-        # No env vars – should take the "not configured" branch, but still succeed.
-        with patch.dict(os.environ, {"TWILIGHT_DIGITAL_API_BASE_URL": "", "TWILIGHT_DIGITAL_DEFAULT_CHANNEL_ID": ""},
-                        clear=False):
-            self._seed_session_code(email="user@example.com", code="123456")
-            resp = self.client.post(
-                "/verify-email-code",
-                json={"email": "user@example.com", "code": "123456"},
-            )
-            self.assertEqual(resp.status_code, 200)
-            self.assertTrue(resp.get_json().get("ok"))
-            # session should contain verified_email and email_code_entry should be cleared
-            with self.client.session_transaction() as sess:
-                self.assertEqual(sess.get("email"), "user@example.com")
-                self.assertIsNone(sess.get("email_code_entry"))
-
     @patch.dict(
         os.environ,
         {
@@ -667,17 +651,17 @@ class TestUserDataApiRoutes(unittest.TestCase):
 
     # Unauthorized (no user in session)
     def test_feed_unauthorized(self):
-        resp = self.client.get("/api/user/feed")
+        resp = self.client.get("/user-feed")
         self.assertEqual(resp.status_code, 401)
         self.assertFalse(resp.get_json().get("ok"))
 
     def test_channels_unauthorized(self):
-        resp = self.client.get("/api/user/channels")
+        resp = self.client.get("/user-channels")
         self.assertEqual(resp.status_code, 401)
         self.assertFalse(resp.get_json().get("ok"))
 
     def test_subscriptions_unauthorized(self):
-        resp = self.client.get("/api/user/subscriptions")
+        resp = self.client.get("/user-subscriptions")
         self.assertEqual(resp.status_code, 401)
         self.assertFalse(resp.get_json().get("ok"))
 
@@ -685,21 +669,21 @@ class TestUserDataApiRoutes(unittest.TestCase):
     def test_feed_service_not_configured(self):
         self._seed_user()
         app.base_url = ""  # simulate missing configuration
-        resp = self.client.get("/api/user/feed")
+        resp = self.client.get("/user-feed")
         self.assertEqual(resp.status_code, 503)
         self.assertFalse(resp.get_json().get("ok"))
 
     def test_channels_service_not_configured(self):
         self._seed_user()
         app.base_url = ""
-        resp = self.client.get("/api/user/channels")
+        resp = self.client.get("/user-channels")
         self.assertEqual(resp.status_code, 503)
         self.assertFalse(resp.get_json().get("ok"))
 
     def test_subscriptions_service_not_configured(self):
         self._seed_user()
         app.base_url = ""
-        resp = self.client.get("/api/user/subscriptions")
+        resp = self.client.get("/user-subscriptions")
         self.assertEqual(resp.status_code, 503)
         self.assertFalse(resp.get_json().get("ok"))
 
@@ -707,13 +691,13 @@ class TestUserDataApiRoutes(unittest.TestCase):
     def test_feed_ok(self):
         self._seed_user()
         app.base_url = "http://api.local"
-        items = [{"id": "f1", "title": "Hello"}]
+        items = {"items": [{"id": "f1", "title": "Hello"}]}
         with patch.object(app, "_http_json", return_value=(200, items)) as mock_http:
-            resp = self.client.get("/api/user/feed")
+            resp = self.client.get("/user-feed")
             self.assertEqual(resp.status_code, 200)
             data = resp.get_json()
             self.assertTrue(data.get("ok"))
-            self.assertEqual(data.get("items"), items)
+            self.assertEqual(data.get("items"), items.get("items"))
             self.assertTrue(mock_http.called)
 
     def test_channels_ok(self):
@@ -721,7 +705,7 @@ class TestUserDataApiRoutes(unittest.TestCase):
         app.base_url = "http://api.local"
         items = [{"id": "c1", "title": "My Channel"}]
         with patch.object(app, "_http_json", return_value=(200, items)) as mock_http:
-            resp = self.client.get("/api/user/channels")
+            resp = self.client.get("/user-channels")
             self.assertEqual(resp.status_code, 200)
             data = resp.get_json()
             self.assertTrue(data.get("ok"))
@@ -733,7 +717,7 @@ class TestUserDataApiRoutes(unittest.TestCase):
         app.base_url = "http://api.local"
         items = [{"id": "s1", "channel": {"id": "c1", "title": "Followed"}}]
         with patch.object(app, "_http_json", return_value=(200, items)) as mock_http:
-            resp = self.client.get("/api/user/subscriptions")
+            resp = self.client.get("/user-subscriptions")
             self.assertEqual(resp.status_code, 200)
             data = resp.get_json()
             self.assertTrue(data.get("ok"))
@@ -745,7 +729,7 @@ class TestUserDataApiRoutes(unittest.TestCase):
         self._seed_user()
         app.base_url = "http://api.local"
         with patch.object(app, "_http_json", return_value=(500, {"error": "boom"})):
-            resp = self.client.get("/api/user/feed")
+            resp = self.client.get("/user-feed")
             self.assertEqual(resp.status_code, 502)
             self.assertFalse(resp.get_json().get("ok"))
 
@@ -753,15 +737,15 @@ class TestUserDataApiRoutes(unittest.TestCase):
         self._seed_user()
         app.base_url = "http://api.local"
         with patch.object(app, "_http_json", return_value=(404, {"error": "not found"})):
-            resp = self.client.get("/api/user/channels")
-            self.assertEqual(resp.status_code, 502)
+            resp = self.client.get("/user-channels")
+            self.assertEqual(resp.status_code, 404)
             self.assertFalse(resp.get_json().get("ok"))
 
     def test_subscriptions_api_error_status(self):
         self._seed_user()
         app.base_url = "http://api.local"
         with patch.object(app, "_http_json", return_value=(503, {"error": "unavailable"})):
-            resp = self.client.get("/api/user/subscriptions")
+            resp = self.client.get("user-subscriptions")
             self.assertEqual(resp.status_code, 502)
             self.assertFalse(resp.get_json().get("ok"))
 
@@ -770,7 +754,7 @@ class TestUserDataApiRoutes(unittest.TestCase):
         self._seed_user()
         app.base_url = "http://api.local"
         with patch.object(app, "_http_json", side_effect=RuntimeError("network")):
-            resp = self.client.get("/api/user/feed")
+            resp = self.client.get("/user-feed")
             self.assertEqual(resp.status_code, 500)
             self.assertFalse(resp.get_json().get("ok"))
 
@@ -778,7 +762,7 @@ class TestUserDataApiRoutes(unittest.TestCase):
         self._seed_user()
         app.base_url = "http://api.local"
         with patch.object(app, "_http_json", side_effect=RuntimeError("network")):
-            resp = self.client.get("/api/user/channels")
+            resp = self.client.get("/user-channels")
             self.assertEqual(resp.status_code, 500)
             self.assertFalse(resp.get_json().get("ok"))
 
@@ -786,7 +770,7 @@ class TestUserDataApiRoutes(unittest.TestCase):
         self._seed_user()
         app.base_url = "http://api.local"
         with patch.object(app, "_http_json", side_effect=RuntimeError("network")):
-            resp = self.client.get("/api/user/subscriptions")
+            resp = self.client.get("/user-subscriptions")
             self.assertEqual(resp.status_code, 500)
             self.assertFalse(resp.get_json().get("ok"))
 

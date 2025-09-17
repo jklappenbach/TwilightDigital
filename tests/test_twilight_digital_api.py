@@ -47,6 +47,22 @@ class FakeCollection:
                     if not any(_matches(doc, sub) for sub in v):
                         return False
                     continue
+                if k == "$text":
+                    # Minimal simulation of MongoDB text search across selected fields
+                    # Supports: {"$text": {"$search": "term"}}
+                    search_term = ""
+                    if isinstance(v, dict):
+                        search_term = v.get("$search", "") or ""
+                    else:
+                        search_term = str(v or "")
+                    search_term = str(search_term)
+                    if not search_term:
+                        return False
+                    haystack_fields = ["title", "description", "channel_title"]
+                    sv = search_term.lower()
+                    if not any(sv in str(doc.get(f, "")).lower() for f in haystack_fields):
+                        return False
+                    continue
                 if isinstance(v, dict):
                     if "$gte" in v and "$lte" in v:
                         # range
@@ -81,6 +97,21 @@ class FakeCollection:
             for k, v in filt.items():
                 if k == "$or":
                     if not any(_matches(doc, sub) for sub in v):
+                        return False
+                    continue
+                if k == "$text":
+                    # Minimal simulation of MongoDB text search across selected fields
+                    search_term = ""
+                    if isinstance(v, dict):
+                        search_term = v.get("$search", "") or ""
+                    else:
+                        search_term = str(v or "")
+                    search_term = str(search_term)
+                    if not search_term:
+                        return False
+                    haystack_fields = ["title", "description", "channel_title"]
+                    sv = search_term.lower()
+                    if not any(sv in str(doc.get(f, "")).lower() for f in haystack_fields):
                         return False
                     continue
                 if isinstance(v, dict):
@@ -119,6 +150,21 @@ class FakeCollection:
             for k, v in filt.items():
                 if k == "$or":
                     if not any(_matches(doc, sub) for sub in v):
+                        return False
+                    continue
+                if k == "$text":
+                    # Minimal simulation of MongoDB text search across selected fields
+                    search_term = ""
+                    if isinstance(v, dict):
+                        search_term = v.get("$search", "") or ""
+                    else:
+                        search_term = str(v or "")
+                    search_term = str(search_term)
+                    if not search_term:
+                        return False
+                    haystack_fields = ["title", "description", "channel_title"]
+                    sv = search_term.lower()
+                    if not any(sv in str(doc.get(f, "")).lower() for f in haystack_fields):
                         return False
                     continue
                 if isinstance(v, dict):
@@ -378,7 +424,13 @@ class TestTwilightDigitalAPI(unittest.TestCase):
         ).get_json()
         self._crud_cycle(
             "subscriptions",
-            {"user_id": user["user_id"], "channel_id": ch["channel_id"], "subscription_tier_id": tier["subscription_tier_id"]},
+            {
+                "user_id": user["user_id"],
+                "channel_id": ch["channel_id"],
+                "channel_name": ch["title"],
+                "channel_thumbnail_url": ch["thumbnail_url"],
+                "subscription_tier_id": tier["subscription_tier_id"],
+            },
             {"subscription_tier_id": tier["subscription_tier_id"]},
             id_field="subscription_id",
         )

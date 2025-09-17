@@ -99,7 +99,7 @@ def create_app(mdb=None):
         "subscriptions": {
             "id_field": "subscription_id",
             "enums": {},
-            "required": ["user_id", "channel_id", "subscription_tier_id"],
+            "required": ["user_id", "channel_id", "channel_title", "channel_thumbnail_url", "subscription_tier_id"],
             "optional": [],
         },
         "stripe_payment_agreements": {
@@ -765,7 +765,7 @@ def create_app(mdb=None):
         query = {"user_id": user_id}
         if q:
             # Use MongoDB text search to leverage text indexes over title/channel_title/description
-            query["$text"] = {"$search": q}
+            query["$text"] = { "$search": q, "$language": "en", "$caseSensitive": False }
 
         # Optional projection to trim payload if needed
         projection = None

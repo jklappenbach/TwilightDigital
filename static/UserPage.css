@@ -7,71 +7,73 @@
 
 /* Global variables and base styles (from TwilightDigital.css) */
 :root {
-  --panel-height: 20vh;
-  --footer-height: 20vh;
-  --bg: #0a0a0a;
-  --fg: #f5f5f5;
-  --muted: #b0b0b0;
-  --accent: #ffffff;
-  --frost: rgba(255, 255, 255, 0.06);
-  --frost-border: rgba(255, 255, 255, 0.2);
-  --btn-bg: rgba(255, 255, 255, 0.10);
-  --btn-bg-hover: rgba(255, 255, 255, 0.16);
-  --card-bg: rgba(255, 255, 255, 0.05);
-  --search-bg: rgba(255, 255, 255, 0.10);
-  --shadow: 0 8px 24px rgba(0,0,0,0.5);
-  --radius: 14px;
-  --radius-pill: 999px;
-  --maxw: 1200px;
+    --panel-height: 20vh;
+    --footer-height: 20vh;
+    --bg: #0a0a0a;
+    --fg: #f5f5f5;
+    --muted: #b0b0b0;
+    --accent: #ffffff;
+    --frost: rgba(255, 255, 255, 0.06);
+    --frost-border: rgba(255, 255, 255, 0.2);
+    --btn-bg: rgba(255, 255, 255, 0.10);
+    --btn-bg-hover: rgba(255, 255, 255, 0.16);
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --search-bg: rgba(255, 255, 255, 0.10);
+    --shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --radius: 14px;
+    --radius-pill: 999px;
+    --maxw: 1200px;
 
-  /* Page-specific variables */
-  --sidebar-w: min(16.5vw, 220px);
+    /* Page-specific variables */
+    --sidebar-w: min(16.5vw, 220px);
 }
 
 html, body {
-  height: 100%;
-  margin: 0;
-  background:
-    radial-gradient(900px 600px at 15% -10%, rgba(255,255,255,0.06) 0%, transparent 60%),
-    radial-gradient(800px 600px at 110% 0%, rgba(255,255,255,0.04) 0%, transparent 60%),
+    height: 100%;
+    margin: 0;
+    background: radial-gradient(900px 600px at 15% -10%, rgba(255, 255, 255, 0.06) 0%, transparent 60%),
+    radial-gradient(800px 600px at 110% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 60%),
     var(--bg);
-  color: var(--fg);
-  font-family:
-    "Inter", "SF Pro Text", "Segoe UI Variable", "Segoe UI",
-    Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    color: var(--fg);
+    font-family: "Inter", "SF Pro Text", "Segoe UI Variable", "Segoe UI",
+    Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", serif;
 }
 
 .page-wrap {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 16px;
-  height: 100vh;
-  box-sizing: border-box;
-  padding: 12px;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 16px;
+    height: 100vh;
+    box-sizing: border-box;
+    padding: 12px;
 }
 
 /* Page field (moved from inline styles) */
 .page-field {
-  width: 4rem;
-  text-align: center;
-  height: 32px;
-  line-height: 32px;
-  border-radius: 6px;
+    width: 4rem;
+    text-align: center;
+    height: 32px;
+    line-height: 32px;
+    border-radius: 6px;
 }
 
 /* Cards and utility styles referenced by UserPage */
 .card {
-  background: var(--card-bg);
-  border: 1px solid var(--frost-border);
-  border-radius: var(--radius);
-  padding: 18px;
-  box-shadow: var(--shadow);
+    background: var(--card-bg);
+    border: 1px solid var(--frost-border);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: var(--shadow);
 }
+
 .card h2 {
-  margin: 0 0 8px;
-  font-size: clamp(18px, 2.4vw, 24px);
+    margin: 0 0 8px;
+    font-size: clamp(18px, 2.4vw, 24px);
 }
-.muted { color: var(--muted); }
+
+.muted {
+    color: var(--muted);
+}
 
 /* Left sidebar */
 .sidebar {
@@ -176,15 +178,18 @@ html, body {
     cursor: pointer;
     transition: background .15s ease, border-color .15s ease;
 }
+
 .side-item:hover {
     background: var(--btn-bg-hover);
     border-color: var(--frost-border);
 }
+
 .side-item[aria-selected="true"] {
     background: linear-gradient(135deg, rgba(92, 200, 255, 0.2), rgba(255, 255, 255, 0.06));
     border-color: rgba(92, 200, 255, 0.5);
     box-shadow: 0 0 0 1px rgba(92, 200, 255, 0.2) inset;
 }
+
 .side-item .icon {
     width: 22px;
     height: 22px;
@@ -193,6 +198,7 @@ html, body {
     justify-content: center;
     opacity: .9;
 }
+
 .side-item .label {
     font-weight: 600;
     letter-spacing: .02em;
@@ -223,6 +229,7 @@ html, body {
     cursor: pointer;
     transition: background .15s ease, border-color .15s ease;
 }
+
 .create-creator:hover {
     background: var(--btn-bg-hover);
     border-color: rgba(92, 200, 255, 0.6);
@@ -264,6 +271,7 @@ html, body {
     background: var(--btn-bg);
     cursor: pointer;
 }
+
 .user-menu-btn:hover {
     background: var(--btn-bg-hover);
 }
@@ -277,14 +285,16 @@ html, body {
     background: rgba(0, 0, 0, 0.85);
     border: 1px solid var(--frost-border);
     border-radius: 10px;
-    box-shadow: 0 14px 28px rgba(0,0,0,0.35);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35);
     padding: 8px;
     display: none;
     z-index: 100;
 }
+
 .user-menu[aria-hidden="false"] {
     display: block;
 }
+
 .user-menu-item {
     display: block;
     padding: 10px 12px;
@@ -293,6 +303,7 @@ html, body {
     text-decoration: none;
     font-weight: 600;
 }
+
 .user-menu-item:hover {
     background: var(--btn-bg-hover);
 }
@@ -313,157 +324,194 @@ html, body {
 .tab-panel {
     display: none;
 }
+
 .tab-panel[aria-hidden="false"] {
     display: block;
 }
+
 /* Icon buttons already styled; ensure hover/active is consistent */
 .icon-btn {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.3);
-  color: var(--fg);
-  border-radius: 6px;
-  padding: 6px;
-  cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: var(--fg);
+    border-radius: 6px;
+    padding: 6px;
+    cursor: pointer;
 }
+
 .icon-btn:hover {
-  background: rgba(255,255,255,0.2);
-  border-color: rgba(255,255,255,0.5);
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 .filter-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1 1 auto;
+}
+
+.filter-input {
+    width: 80%;
+    flex: 1 1 auto;
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.panel-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex: 1 1 auto;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: nowrap; /* prevent wrapping to a second line */
+  font: inherit;     /* consistent typography */
 }
-.filter-input {
-  flex: 1 1 auto;
-  padding: 6px 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 14px;
+
+.panel-header .filter-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0; /* allow input to shrink without overflow */
+  font: inherit;
+}
+
+.panel-header .filter-input {
+  flex: 0 1 auto;
+  width: clamp(160px, 28vw, 320px); /* shortened width so the header stays on one line */
+  max-width: 320px;
+  min-width: 160px;
+}
+
+.panel-header .toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto; /* push controls to the right */
+  font: inherit;
 }
 
 /* Ensure feed table supports sticky header */
 .feed-table {
-  width: 100%;
-  table-layout: fixed;
-  border-collapse: separate; /* sticky headers work better with separate */
-  border-spacing: 0;
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate; /* sticky headers work better with separate */
+    border-spacing: 0;
 }
 
 /* Lock the header row; it will stick within the scrolling .feed-list container */
 .feed-table thead th {
+  text-align: center;
+  font-weight: 600;
+  color: var(--fg);
   position: sticky;
   top: 0;
-  z-index: 2; /* keep above body rows */
+  z-index: 2;
   background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: saturate(120%) blur(2px);
-  /* redraw the separator line under the header */
   box-shadow: inset 0 -1px 0 rgba(255,255,255,0.12);
 }
 
 /* Prevent horizontal shift when scrollbar appears by enforcing column widths */
 .feed-table th, .feed-table td {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .feed-table thead tr {
-  background-color: rgba(255,255,255,0.05);
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+    background-color: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-#headerSelectAll {
-  vertical-align: middle;
+/* Header controls: consistent typography and centered layout */
+.feed-table thead .sort-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center; /* center label + arrow */
+    gap: 6px;
+    width: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit; /* inherit color from th */
+    text-decoration: none; /* no underline ever */
+    font: inherit; /* inherit font family, size, weight */
+    padding: 6px 0;
 }
 
-.panel-header {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: nowrap;
-}
-.toolbar {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-left: auto;
+.feed-table thead .sort-btn:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.35);
+    outline-offset: 2px;
+    border-radius: 6px;
 }
 
-/* Feed list container (moved from inline styles) */
-#feedList {
-  padding: 0;
-  margin: 0;
-  max-height: 60vh;
-  overflow: auto;
+/* Normalize header link styles (if any) so state doesn't change typography/color) */
+.feed-table thead a,
+.feed-table thead a:visited,
+.feed-table thead a:hover,
+.feed-table thead a:active,
+.feed-table thead button,
+.feed-table thead button:visited,
+.feed-table thead button:hover,
+.feed-table thead button:active {
+    color: inherit;
+    text-decoration: none;
+    font: inherit;
 }
-/* Optional: ensure header controls remain clickable and visually consistent */
-.sort-btn {
-  display: flex;
+
+.feed-table thead .sort-btn,
+.feed-table thead .sort-btn:visited,
+.feed-table thead .sort-btn:hover,
+.feed-table thead .sort-btn:active {
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 6px;
   width: 100%;
   background: none;
   border: none;
   cursor: pointer;
   color: inherit;
-  font-size: inherit;
-  padding: 0;
+  text-decoration: none;
+  font: inherit;
+  padding: 6px 0;
 }
+
 /* Column sizing and padding */
 #th-select {
-  width: 50px;
-  text-align: center;
-  padding: 8px 4px;
-  white-space: nowrap;
+    width: 50px;
+    text-align: center;
+    padding: 8px 4px;
+    white-space: nowrap;
 }
+
 #th-date {
-  width: 75px;
-  padding: 8px 4px;
+    width: 100px;
+    padding: 8px 4px;
 }
+
 #th-channel {
-  width: 250px;
-  padding: 8px 4px;
+    width: 250px;
+    padding: 8px 4px;
 }
+
 #th-item {
-  width: 200px;
-  padding: 8px 4px;
+    width: 220px;
+    padding: 8px 4px;
 }
 
 .feed-table th[scope="col"] {
-  padding: 8px 4px;
-}
-
-/* Sticky header */
-.feed-table thead th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: saturate(120%) blur(2px);
-  box-shadow: inset 0 -1px 0 rgba(255,255,255,0.12);
+    padding: 8px 4px;
 }
 
 /* Cells overflow handling */
-.feed-table th, .feed-table td {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .feed-table a {
-  text-decoration: none;
-  color: inherit;
+    text-decoration: none;
+    color: inherit;
 }
 
 #th-select .sort-btn {
-  width: auto;
-  margin-left: 2px;
-}
-
-
-/* Utility */
-.hidden {
-    display: none !important;
+    width: auto;
+    margin-left: 2px;
 }

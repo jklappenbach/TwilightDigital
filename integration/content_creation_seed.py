@@ -8,7 +8,7 @@ import requests
 
 BASE_URL = os.getenv("TWILIGHT_DIGITAL_API_BASE_URL", "http://localhost:8080").rstrip("/")
 DEFAULT_USER_EMAIL = "jklappenbach@gmail.com"
-DEFAULT_USER_ID = "d649735f-40a2-422e-9c51-666e4c4333b7"
+user_id = ""
 
 # How many to create
 NUM_CREATORS = 10
@@ -26,7 +26,6 @@ CONTENT_EXAMPLE = "https://example.com/content/{seed}"
 
 session = requests.Session()
 # Optionally add a user header for audit logging transparency
-session.headers.update({"Content-Type": "application/json", "X-User-Id": DEFAULT_USER_ID})
 
 def iso_now(offset_minutes=0):
     dt = datetime.now(timezone.utc) + timedelta(minutes=offset_minutes)
@@ -46,6 +45,17 @@ def post(path, payload, expect_status=(200,201)):
     if r.status_code not in expect_status:
         raise RuntimeError(f"POST {path} failed: {r.status_code} {r.text}")
     return r.json()
+
+def get(path, expect_status=(200,201)):
+    url = f"{BASE_URL}{path}"
+    r = session.get(url)
+    if r.status_code not in expect_status:
+        raise RuntimeError(f"GET {path} failed: {r.status_code}, {r.text}")
+    return r.json()
+
+def get_default_user():
+    default_user = get(f"/users/by_email/{DEFAULT_USER_EMAIL}")
+    return default_user.get("user_id")
 
 def create_user(ix):
     seed = f"user{ix:03d}-{rand_word()}"
@@ -82,13 +92,16 @@ def create_subscription_tier(channel, ix):
     }
     return post("/subscription_tiers", payload, expect_status=(201,))
 
-def create_subscription(user_id, channel_id, subscription_tier_id):
+def create_subscription(user_id, channel, subscription_tier_id):
     payload = {
         "user_id": user_id,
-        "channel_id": channel_id,
+        "channel_id": channel["channel_id"],
+        "channel_title": channel.get("title") or "",
+        "channel_thumbnail_url": channel.get("thumbnail_url") or THUMB_EXAMPLE.format(seed=channel["channel_id"]),
         "subscription_tier_id": subscription_tier_id,
     }
     return post("/subscriptions", payload, expect_status=(201,))
+
 
 def create_event(channel, ev_index):
     seed = f"ev-{channel['channel_id']}-{ev_index:04d}"
@@ -164,6 +177,8 @@ def main():
             print(f"{label} created in {dur:.3f}s")
         return result
 
+    user_id = get_default_user()
+    session.headers.update({"Content-Type": "application/json", "X-User-Id": user_id})
     total_start = time.perf_counter()
 
     # 1) Create creators (users)
@@ -196,8 +211,8 @@ def main():
             "subscriptions",
             "Subscription",
             create_subscription,
-            DEFAULT_USER_ID,
-            ch["channel_id"],
+            user_id,
+            ch,
             tier_by_channel[ch["channel_id"]],
         )
         created["subscriptions_for_default_user"].append(sub)
@@ -215,7 +230,7 @@ def main():
             ev = time_call("events", "Event", create_event, ch, ev_i)
             created["events_by_channel"][ch_id].append(ev["event_id"])
             if ch_id in subscribed_channel_ids:
-                fr = time_call("feeds", "FeedRecord", create_feed_record, DEFAULT_USER_ID, ch, ev)
+                fr = time_call("feeds", "FeedRecord", create_feed_record, user_id, ch, ev)
                 created["feeds_for_default_user"].append(fr["field_id"] if "field_id" in fr else ev["event_id"])
         if idx % 5 == 0 or idx == total_channels:
             print(f"Created events for channels: {idx}/{total_channels}")

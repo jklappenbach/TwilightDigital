@@ -662,8 +662,8 @@ def user_channels():
         status, resp = _http_json("GET", f"{base_url}/channels/by_creator_id/{user_id}")
         if status == 200 and isinstance(resp, list):
             return jsonify(ok=True, items=resp)
-        app.logger.error(f"/api/user/channels: HTTP {status} {resp}")
-        return jsonify(ok=False, error="Failed to load channels"), 502
+        app.logger.info(f"/api/user/channels: HTTP {status} {resp}")
+        return jsonify(ok=False, error="Failed to load channels"), status
     except Exception as ex:
         app.logger.exception(f"/api/user/channels: exception: {ex}")
         return jsonify(ok=False, error="Internal error"), 500

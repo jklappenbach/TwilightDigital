@@ -83,7 +83,7 @@
     <div id="sidebarChannels" aria-label="{{ _('Channels') }}">
         <div class="sidebar-scroll" id="sidebarScroll" aria-orientation="vertical"><span
                 class="channels-bar">{{ _('Channels') }}</span>
-            <ul class="channels-list">
+            <ul id="channelsList" class="channels-list">
                 {% if creators and creators|length > 0 %}
                     {% for ch in creators %}
                         <li class="channel-item">
@@ -107,7 +107,7 @@
         <div id="sidebarMyChannels" aria-label="{{ _('My Channels') }}">
             <div class="sidebar-scroll" aria-orientation="vertical">
                 <span class="channels-bar">{{ _('My Channels') }}</span>
-                <ul class="channels-list">
+                <ul id="myChannelsList" class="channels-list">
                     {% for ch in my_channels %}
                         <li class="channel-item">
                             <img class="channel-thumb"
@@ -124,7 +124,7 @@
         <button class="create-creator" type="button" aria-label="{{ _('Become a creator') }}">
         <span class="icon" aria-hidden="true">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path d="M12 5v14M5 12h14" stroke="white" stroke-opacity="0.9" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 5v14M5 12h14" stroke="white" stroke-opacity="0.9" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </span>
             <span class="label">{{ _('Become a creator') }}</span>
@@ -148,14 +148,16 @@
             </div>
         </div>
         <div id="pane-feed" class="tab-panel" role="tabpanel" aria-labelledby="tab-feed" aria-hidden="false">
-                        <div class="card">
+            <div class="card">
                 <div class="panel-header">
                     <div class="filter-wrap">
-                        <button id="applyFilterBtn" class="icon-btn" title="{{ _('Apply filter') }}" aria-label="{{ _('Apply filter') }}">
+                        <button id="applyFilterBtn" class="icon-btn" title="{{ _('Apply filter') }}"
+                                aria-label="{{ _('Apply filter') }}">
                             <span class="icon" aria-hidden="true">
                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                                 <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
-                                <path d="M21 21l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M21 21l-3.5-3.5" stroke="currentColor" stroke-width="2"
+                                      stroke-linecap="round"/>
                               </svg>
                             </span>
                         </button>
@@ -163,63 +165,76 @@
                                placeholder="{{ _('Filter feed by title or description...') }}"/>
                     </div>
                     <div class="toolbar">
-                        <button id="prevBtn" class="icon-btn" title="{{ _('Previous page') }}" aria-label="{{ _('Previous page') }}">
+                        <button id="prevBtn" class="icon-btn" title="{{ _('Previous page') }}"
+                                aria-label="{{ _('Previous page') }}">
                             <span class="icon" aria-hidden="true">
                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                      stroke-linejoin="round"/>
                               </svg>
                             </span>
                         </button>
-                        <input id="pageCurrent" class="page-field" type="number" min="1" value="1" aria-label="{{ _('Current page') }}" readonly/>
-                        <button id="nextBtn" class="icon-btn" title="{{ _('Next page') }}" aria-label="{{ _('Next page') }}">
+                        <input id="pageCurrent" class="page-field" type="number" min="1" value="1"
+                               aria-label="{{ _('Current page') }}" readonly/>
+                        <button id="nextBtn" class="icon-btn" title="{{ _('Next page') }}"
+                                aria-label="{{ _('Next page') }}">
                             <span class="icon" aria-hidden="true">
                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                      stroke-linejoin="round"/>
                               </svg>
                             </span>
                         </button>
-                        <button id="deleteBtn" class="icon-btn" title="{{ _('Delete selected') }}" aria-label="{{ _('Delete selected') }}">
+                        <button id="deleteBtn" class="icon-btn" title="{{ _('Delete selected') }}"
+                                aria-label="{{ _('Delete selected') }}">
                             <span class="icon" aria-hidden="true">
                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                                 <path d="M3 6h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                <path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M8 6V4a2 2 0 0 1 2-2h4a 2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2"
+                                      stroke-linecap="round"/>
+                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a 2 2 0 0 1-2-2L5 6" stroke="currentColor"
+                                      stroke-width="2" stroke-linecap="round"/>
+                                <path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2"
+                                      stroke-linecap="round"/>
                               </svg>
                             </span>
                         </button>
                     </div>
                 </div>
-                <div class="feed-list" id="feedList">
+                <div class="feed-list" id="feedList" style="margin-top: 4px;">
                     <table id="feedTable" class="feed-table" role="grid" aria-label="{{ _('Feed items') }}">
                         <thead>
-                            <tr>
-                                <th id="th-select" scope="col">
-                                    <input type="checkbox" id="headerSelectAll" aria-label="{{ _('Toggle select all on current page') }}"/>
-                                </th>
-                               <th id="th-item" scope="col">
-                                    <button id="sortItemBtn" class="sort-btn" type="button" aria-label="{{ _('Sort by title') }}">
-                                        <span>{{ _('Title') }}</span>
-                                        <span class="arrow" data-key="item" aria-hidden="true">↕</span>
-                                    </button>
-                                </th>
-                                <th id="th-desc" scope="col">{{ _('Description') }}</th>
-                                <th id="th-channel" scope="col">
-                                    <button id="sortItemBtn" class="sort-btn" type="button" aria-label="{{ _('Sort by channel') }}">
-                                        <span>{{ _('Channel') }}</span>
-                                        <span class="arrow" data-key="item" aria-hidden="true">↕</span>
-                                    </button>
-                                </th>
-                                <th id="th-date" scope="col">
-                                    <button id="sortDateBtn" class="sort-btn" type="button" aria-label="{{ _('Sort by date') }}">
-                                        <span>{{ _('Date') }}</span>
-                                        <span class="arrow" data-key="date" aria-hidden="true">↕</span>
-                                    </button>
-                                </th>
-                            </tr>
+                        <tr>
+                            <th id="th-select" scope="col">
+                                <input type="checkbox" id="headerSelectAll"
+                                       aria-label="{{ _('Toggle select all on current page') }}"/>
+                            </th>
+                            <th id="th-item" scope="col">
+                                <button id="sortItemBtn" class="sort-btn" type="button"
+                                        aria-label="{{ _('Sort by title') }}">
+                                    <span>{{ _('Title') }}</span>
+                                    <span class="arrow" data-key="item" aria-hidden="true">↕</span>
+                                </button>
+                            </th>
+                            <th id="th-desc" scope="col">{{ _('Description') }}</th>
+                            <th id="th-channel" scope="col">
+                                <button id="sortChannelBtn" class="sort-btn" type="button"
+                                        aria-label="{{ _('Sort by channel') }}">
+                                    <span>{{ _('Channel') }}</span>
+                                    <span class="arrow" data-key="channel" aria-hidden="true">↕</span>
+                                </button>
+                            </th>
+                            <th id="th-date" scope="col">
+                                <button id="sortDateBtn" class="sort-btn" type="button"
+                                        aria-label="{{ _('Sort by date') }}">
+                                    <span>{{ _('Date') }}</span>
+                                    <span class="arrow" data-key="date" aria-hidden="true">↕</span>
+                                </button>
+                            </th>
+                        </tr>
                         </thead>
                         <tbody id="feedTbody">
-                            <!-- {{ _('Feed rows rendered dynamically') }} -->
+                        <!-- {{ _('Feed rows rendered dynamically') }} -->
                         </tbody>
                     </table>
                 </div>
@@ -339,35 +354,61 @@
         function formatDateLabel(s) {
             const d = new Date(s);
             if (isNaN(d)) return s || '';
-            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             // Use UTC to avoid local timezone shifting dates if server returns Z/UTC
             return `${months[d.getUTCMonth()]} ${d.getUTCDate()}`;
         }
 
         // Render channels (subscriptions/creators)
-        function renderChannels(listEl, items) {
+        function renderMyChannels(listEl, items) {
             listEl.innerHTML = '';
             if (!Array.isArray(items) || items.length === 0) {
                 listEl.appendChild(
-                    el('li', { class: 'channel-item' }, [
-                        el('img', { class: 'channel-thumb', src: DEFAULT_THUMB, alt: 'Default channel thumbnail' }),
-                        el('span', { class: 'channel-title', text: '{{ _("No channels yet") }}' })
+                    el('li', {class: 'channel-item'}, [
+                        el('img', {class: 'channel-thumb', src: DEFAULT_THUMB, alt: 'Default channel thumbnail'}),
+                        el('span', {class: 'channel-title', text: '{{ _("No channels yet") }}'})
                     ])
                 );
                 return;
             }
             items.forEach(ch => {
-                const title = safeText(ch.title || ch.name || ch.screen_name || '{{ _("Untitled") }}');
-                const thumb = ch.thumbnail_url || ch.thumbnail || DEFAULT_THUMB;
+                const channelId = ch.channel_id;
+                const title = safeText(ch.title || '{{ _("Untitled") }}');
+                const thumb = ch.thumbnail_url || DEFAULT_THUMB;
                 listEl.appendChild(
-                    el('li', { class: 'channel-item' }, [
-                        el('img', { class: 'channel-thumb', src: thumb || DEFAULT_THUMB, alt: `${title} thumbnail` }),
-                        el('span', { class: 'channel-title', text: title })
+                    el('li', {id: id, class: 'channel-item'}, [
+                        el('img', {class: 'channel-thumb', src: thumb, alt: `${title} thumbnail`}),
+                        el('span', {class: 'channel-title', text: title})
                     ])
                 );
             });
         }
-        // ... existing code ...
+
+        function renderChannels(listEl, items) {
+            listEl.innerHTML = '';
+            if (!Array.isArray(items) || items.length === 0) {
+                listEl.appendChild(
+                    el('li', {class: 'channel-item'}, [
+                        el('img', {class: 'channel-thumb', src: DEFAULT_THUMB, alt: 'Default channel thumbnail'}),
+                        el('span', {class: 'channel-title', text: '{{ _("No channels yet") }}'})
+                    ])
+                );
+                return;
+            }
+            items.forEach(sub => {
+                const channelId = sub.channel_id;
+                const title = safeText(sub.channel_title || '{{ _("Untitled") }}');
+                const thumb = sub.channel_thumbnail_url || DEFAULT_THUMB;
+                listEl.appendChild(
+                    el('li', {id: channelId, class: 'channel-item'}, [
+                        el('img', {class: 'channel-thumb', src: thumb, alt: `${title} thumbnail`}),
+                        el('span', {class: 'channel-title', text: title})
+                    ])
+                );
+            });
+        }
+
+
         function renderFeed(items) {
             feedTbody.innerHTML = '';
             if (!Array.isArray(items)) return;
@@ -385,31 +426,53 @@
 
                 const tr = el('tr', {
                     class: 'feed-item',
-                    dataset: { id: idval, title: title, desc: desc, date: dtRaw, viewed: viewed },
+                    dataset: {id: idval, title: title, desc: desc, date: dtRaw, viewed: viewed, channel: channel},
                     style: 'height:48px; border-bottom:1px solid rgba(255,255,255,0.05);'
                 }, [
-                    el('td', { class: 'checkbox-cell', style: 'text-align:center; padding:4px; vertical-align:middle;' }, [
-                        el('input', { type: 'checkbox', class: 'select-box' })
+                    el('td', {
+                        class: 'checkbox-cell',
+                        style: 'text-align:center; padding:4px; vertical-align:middle;'
+                    }, [
+                        el('input', {type: 'checkbox', class: 'select-box'})
                     ]),
-                    el('td', { class: 'title-cell', style: 'padding:4px; vertical-align:middle;' }, [
-                        el('a', { href: url }, [
-                            el('div', { style: 'display:flex; align-items:center; gap:8px; min-width:0;' }, [
-                                el('img', { class: 'thumb', src: thumb || DEFAULT_THUMB, alt: '', style: 'width:32px; height:32px; object-fit:cover; border-radius:4px; flex-shrink:0;' }),
-                                el('div', { class: 'title', style: 'white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;', text: title })
+                    el('td', {class: 'title-cell', style: 'padding:4px; vertical-align:middle;'}, [
+                        el('a', {href: url}, [
+                            el('div', {style: 'display:flex; align-items:center; gap:8px; min-width:0;'}, [
+                                el('img', {
+                                    class: 'thumb',
+                                    src: thumb || DEFAULT_THUMB,
+                                    alt: '',
+                                    style: 'width:32px; height:32px; object-fit:cover; border-radius:4px; flex-shrink:0;'
+                                }),
+                                el('div', {
+                                    class: 'title',
+                                    style: 'white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;',
+                                    text: title
+                                })
                             ])
                         ])
                     ]),
-                    el('td', { class: 'desc-cell', style: 'padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);' }, [
+                    el('td', {
+                        class: 'desc-cell',
+                        style: 'padding:4px; vertical-align:middle; font-size:14px; color:rgba(255,255,255,0.8);'
+                    }, [
                         document.createTextNode(desc)
                     ]),
-                    el('td', { class: 'channel-cell', style: 'padding:4px; vertical-align:middle;' }, [
-                        el('a', { href: url }, [
-                            el('div', { style: 'display:flex; align-items:center; gap:8px; min-width:0;' }, [
-                                el('div', { class: 'channel', style: 'white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;', text: channel })
+                    el('td', {class: 'channel-cell', style: 'padding:4px; vertical-align:middle;'}, [
+                        el('a', {href: url}, [
+                            el('div', {style: 'display:flex; align-items:center; gap:8px; min-width:0;'}, [
+                                el('div', {
+                                    class: 'channel',
+                                    style: 'white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;',
+                                    text: channel
+                                })
                             ])
                         ])
                     ]),
-                    el('td', { class: 'date-cell', style: 'padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;' }, [
+                    el('td', {
+                        class: 'date-cell',
+                        style: 'padding:4px; vertical-align:middle; font-size:14px; white-space:nowrap;'
+                    }, [
                         document.createTextNode(formatDateLabel(dtRaw))
                     ]),
                 ]);
@@ -420,33 +483,53 @@
             });
         }
 
+        // Expose renderer for reuse by other scripts
+        window.renderFeed = renderFeed;
+
+        async function loadFeed(q, page, title_sort, date_sort, channel_sort) {
+            const url = '{{ url_for("user_feed") }}';
+            const qs = q && q.trim() ? `q=${encodeURIComponent(q.trim())}` : '';
+            const ts = title_sort !== undefined ? (ts === 'asc' ? '&ts=asc' : '&ts=desc') : '';
+            const ds = date_sort !== undefined ? (ds === 'asc' ? '&ds=asc' : '&ds=desc') : '';
+            const cs = channel_sort !== undefined ? (cs === 'asc' ? '&cs=asc' : '&cs=desc') : '';
+            let req = '';
+            if (qs || ts || ds || cs) {
+                req = `${url}?${qs}${ts}${ds}${cs}`;
+            } else {
+                req = url;
+            }
+            const feedRes = await fetchWithSession(req);
+            const feedJson = await feedRes.json();
+            if (feedJson.error) throw new Error(feedJson.message || 'Failed to load feed data');
+            renderFeed(feedJson.items || []);
+        }
+
+        async function loadMyChannels() {
+            const chanRes = await fetchWithSession('{{ url_for("user_channels") }}')
+            const chanJson = await chanRes.json();
+            if (chanJson.error) throw new Error(chanJson.message);
+            renderMyChannels(myChannelsList, chanJson.items || []);
+        }
+
+        async function loadSubscribedChannels() {
+            const subsRes = await fetchWithSession('{{ url_for("user_subscriptions") }}')
+            const subsJson = await subsRes.json();
+            if (subsJson.error) throw new Error(subsJson.message);
+            renderChannels(channelsList, subsJson.items || []);
+        }
+
         async function loadAll() {
             try {
-                const [feedRes, channelsRes, subsRes] = await Promise.all([
-                    fetchWithSession('{{ url_for("user_feed") }}'),
-                    fetchWithSession('{{ url_for("user_channels") }}'),
-                    fetchWithSession('{{ url_for("user_subscriptions") }}')
+                await Promise.all([
+                    loadFeed(),
+                    loadMyChannels(),
+                    loadSubscribedChannels()
                 ]);
 
-                const [feedJson, channelsJson, subsJson] = await Promise.all([
-                    feedRes.json().catch(() => ({ ok: false })),
-                    channelsRes.json().catch(() => ({ ok: false })),
-                    subsRes.json().catch(() => ({ ok: false }))
-                ]);
-
-                if (feedJson.ok) renderFeed(feedJson.items || []);
-                if (channelsJson.ok) renderChannels(myChannelsList, channelsJson.items || []);
-                // Subscriptions could be used to render "Channels" list on the left as creators being followed
-                if (subsJson.ok) {
-                    const creators = Array.isArray(subsJson.items) ? subsJson.items.map(s => s.channel || s.creator || s) : [];
-                    renderChannels(channelsList, creators);
-                }
             } catch (e) {
-                // Soft-fail: leave lists empty if something goes wrong
                 console.error('Failed to initialize user data', e);
             }
 
-            // After populating feed rows, run the existing table behaviors (filter/sort/paginate) initializer
             if (typeof initializeFeedTableBehavior === 'function') {
                 initializeFeedTableBehavior();
             }
@@ -457,7 +540,8 @@
             // no-op placeholder if later needed; current code binds on static IDs below
         };
 
-        document.addEventListener('DOMContentLoaded', loadAll);
+        // Initial load without search query
+        document.addEventListener('DOMContentLoaded', () => loadAll());
     })();
 </script>
 
@@ -512,6 +596,7 @@
         const sortSelectedBtn = document.getElementById('sortSelectedBtn');
         const sortDateBtn = document.getElementById('sortDateBtn');
         const sortItemBtn = document.getElementById('sortItemBtn');
+        const sortChannelBtn = document.getElementById('sortChannelBtn');
 
 
         // If you host the API at another base URL, set it here or on the element's data attribute.
@@ -519,7 +604,7 @@
 
         const PAGE_SIZE = 20;
         let currentPage = 0;
-        let sortState = { key: 'date', dir: -1 }; // dir: 1 asc, -1 desc. Default: newest first (date desc).
+        let sortState = {key: 'date', dir: -1}; // dir: 1 asc, -1 desc. Default: newest first (date desc).
 
         function allItems() {
             return Array.from(document.querySelectorAll('#feedTbody .feed-item'));
@@ -550,12 +635,14 @@
                 return box ? (box.checked ? 1 : 0) : 0;
             }
             if (key === 'date') {
-                // Prefer ISO date in data-date
                 const t = Date.parse(row.dataset.date || '');
                 return isNaN(t) ? 0 : t;
             }
             if (key === 'item') {
                 return (row.dataset.title || '').toLowerCase();
+            }
+            if (key === 'channel') {
+                return (row.dataset.channel || '').toLowerCase();
             }
             return 0;
         }
@@ -682,7 +769,8 @@
                             deleted = true;
                             break;
                         }
-                    } catch (_) { /* keep trying */ }
+                    } catch (_) { /* keep trying */
+                    }
                 }
                 if (!deleted) errors.push(id);
             }
@@ -748,7 +836,27 @@
             sortRows();
             renderPage();
         });
-        observer.observe(document.getElementById('feedTbody'), { childList: true });
+        observer.observe(document.getElementById('feedTbody'), {childList: true});
+
+        // Enable server-side search: call API with ?q= and refresh feed
+        async function applyServerSearch() {
+            const q = (filterInput.value || '').trim();
+            if (typeof window.loadAll === 'function') {
+                await window.loadAll(q);
+            }
+        }
+
+        // Wire search to server-backed refresh
+        applyFilterBtn.addEventListener('click', applyServerSearch);
+        filterInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') applyServerSearch();
+        });
+
+        // Sorting handlers
+        if (sortSelectedBtn) sortSelectedBtn.addEventListener('click', () => toggleSort('selected'));
+        if (sortDateBtn) sortDateBtn.addEventListener('click', () => toggleSort('date'));
+        if (sortItemBtn) sortItemBtn.addEventListener('click', () => toggleSort('item'));
+        if (sortChannelBtn) sortChannelBtn.addEventListener('click', () => toggleSort('channel'));
     })();
 </script>
 
