@@ -228,16 +228,34 @@
     window.renderFeed = renderFeed;
 
     async function loadFeed(q, page, title_sort, date_sort, channel_sort) {
-        const qs = q && q.trim() ? `q=${encodeURIComponent(q.trim())}` : '';
-        const ts = title_sort !== undefined ? (ts === 'asc' ? '&ts=asc' : '&ts=desc') : '';
-        const ds = date_sort !== undefined ? (ds === 'asc' ? '&ds=asc' : '&ds=desc') : '';
-        const cs = channel_sort !== undefined ? (cs === 'asc' ? '&cs=asc' : '&cs=desc') : '';
-        let req = '';
-        if (qs || ts || ds || cs) {
-            req = `${window.session.userFeedUrl}?${qs}${ts}${ds}${cs}`;
-        } else {
-            req = window.session.userFeedUrl;
+        const params = [];
+
+        const qv = (q && String(q).trim());
+        if (qv) params.push(`q=${encodeURIComponent(qv)}`);
+
+        if (Number.isInteger(page) && page >= 0) {
+            params.push(`page=${page}`);
         }
+
+        if (title_sort !== undefined && title_sort !== null) {
+            const dir = String(title_sort).toLowerCase() === 'asc' ? 'asc' : 'desc';
+            params.push(`ts=${dir}`);
+        }
+
+        if (date_sort !== undefined && date_sort !== null) {
+            const dir = String(date_sort).toLowerCase() === 'asc' ? 'asc' : 'desc';
+            params.push(`ds=${dir}`);
+        }
+
+        if (channel_sort !== undefined && channel_sort !== null) {
+            const dir = String(channel_sort).toLowerCase() === 'asc' ? 'asc' : 'desc';
+            params.push(`cs=${dir}`);
+        }
+
+        const req = params.length
+            ? `${window.session.userFeedUrl}?${params.join('&')}`
+            : window.session.userFeedUrl;
+
         const feedRes = await fetchWithSession(req);
         const feedJson = await feedRes.json();
         if (feedJson.error) throw new Error(feedJson.message || 'Failed to load feed data');
